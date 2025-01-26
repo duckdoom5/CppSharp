@@ -7,7 +7,10 @@ namespace CppSharp.Passes
     public class IgnoreSystemDeclarationsPass : TranslationUnitPass
     {
         public IgnoreSystemDeclarationsPass()
-            => VisitOptions.ResetFlags(VisitFlags.NamespaceEnums);
+            => VisitOptions.ResetFlags(
+                VisitFlags.NamespaceEnums | VisitFlags.ClassTemplateSpecializations | 
+                VisitFlags.NamespaceTemplates | VisitFlags.NamespaceTypedefs |
+                VisitFlags.NamespaceFunctions | VisitFlags.NamespaceVariables);
 
         public override bool VisitTranslationUnit(TranslationUnit unit)
         {
@@ -46,10 +49,23 @@ namespace CppSharp.Passes
                 case "char_traits":
                     @class.GenerationKind = GenerationKind.Generate;
                     foreach (var specialization in from s in @class.Specializations
+                             where !s.Arguments.Any(a =>
+                                 s.UnsupportedTemplateArgument(a, Context.TypeMaps))
+                             let arg = s.Arguments[0].Type.Type.Desugar()
+                             where arg.IsPrimitiveType(PrimitiveType.Char)
+                             select s)
+                    {
+                        specialization.GenerationKind = GenerationKind.Generate;
+                        InternalizeSpecializationsInFields(specialization);
+                    }
+                    break;
+
+                case "optional":
+                case "vector":
+                    @class.GenerationKind = GenerationKind.Generate;
+                    foreach (var specialization in from s in @class.Specializations
                                                    where !s.Arguments.Any(a =>
                                                        s.UnsupportedTemplateArgument(a, Context.TypeMaps))
-                                                   let arg = s.Arguments[0].Type.Type.Desugar()
-                                                   where arg.IsPrimitiveType(PrimitiveType.Char)
                                                    select s)
                     {
                         specialization.GenerationKind = GenerationKind.Generate;

@@ -62,6 +62,7 @@ function SetupTestNativeProject(name, depends)
 
     kind "SharedLib"
     language "C++"
+    cppdialect "c++20"
     targetdir (path.join(gendir, name))
 
     files { "**.h", "**.cpp" }

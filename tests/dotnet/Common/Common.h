@@ -867,6 +867,14 @@ private:
 
 DLL_API bool operator ==(const DifferentConstOverloads& d, const char* s);
 
+// Test spaceship operator
+struct DLL_API Point
+{
+    int x;
+    int y;
+    auto operator<=>(const Point&) const = default;
+};
+
 class TestNamingAnonymousTypesInUnion
 {
 public:

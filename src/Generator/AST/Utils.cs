@@ -329,7 +329,7 @@ namespace CppSharp.AST
                 case CXXOperatorKind.Array_New:
                 case CXXOperatorKind.Array_Delete:
                     isBuiltin = false;
-                    return "Operator" + kind.ToString();
+                    return "Operator" + kind;
 
                 case CXXOperatorKind.Conversion:
                     return "implicit operator";

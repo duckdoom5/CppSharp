@@ -8,6 +8,7 @@ using CppSharp.AST.Extensions;
 using CppSharp.Generators;
 using CppSharp.Generators.C;
 using CppSharp.Generators.CSharp;
+using CppSharp.Parser;
 using CppSharp.Passes;
 using static CppSharp.CodeGeneratorHelpers;
 
@@ -43,7 +44,8 @@ namespace CppSharp
             var llvmDir = Path.Combine(GetSourceDirectory("build"), "llvm");
             var llvmRevision = GetLLVMRevision(llvmDir).Substring(0, 6);
 
-            return Directory.EnumerateDirectories(llvmDir, $"*{llvmRevision}*").FirstOrDefault();
+            return Directory.EnumerateDirectories(llvmDir, $"*{llvmRevision}*-Rel*").FirstOrDefault() ??
+                Directory.EnumerateDirectories(llvmDir, $"*{llvmRevision}*").FirstOrDefault();
         }
 
         public void Setup(Driver driver)
@@ -51,6 +53,7 @@ namespace CppSharp
             driver.Options.GeneratorKind = GeneratorKind.CSharp;
             driver.Options.DryRun = true;
             driver.ParserOptions.EnableRTTI = true;
+            driver.ParserOptions.LanguageVersion = LanguageVersion.CPP17_GNU;
             driver.ParserOptions.SkipLayoutInfo = true;
             driver.ParserOptions.UnityBuild = true;
 
@@ -66,7 +69,7 @@ namespace CppSharp
 
             module.IncludeDirs.AddRange(new[]
             {
-                Path.Combine(llvmPath, "include"),
+                Path.Combine(llvmPath, "llvm", "include"),
                 Path.Combine(llvmPath, "build", "include"),
                 Path.Combine(llvmPath, "build", "clang", "include"),
                 Path.Combine(llvmPath, "clang", "include")
@@ -128,13 +131,15 @@ namespace CppSharp
                 unit.FileName.Contains("OperationKinds.h"));
             var operatorKindsUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
                 unit.FileName.Contains("OperatorKinds.h"));
+            var dependenceFlagsUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
+                unit.FileName.Contains("DependenceFlags.h"));
             var typeTraitsUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
                 unit.FileName == "TypeTraits.h");
             var unaryExprOrTypeTrait = typeTraitsUnit.FindNamespace("clang")
                 .FindEnum("UnaryExprOrTypeTrait");
 
             var decls = new Declaration[] { operationKindsUnit, operatorKindsUnit,
-                unaryExprOrTypeTrait }.Union(ExprClasses);
+                dependenceFlagsUnit, unaryExprOrTypeTrait }.Union(ExprClasses);
 
             // Write the native declarations headers
             var declsCodeGen = new ExprDeclarationsCodeGenerator(ctx, decls);
@@ -280,7 +285,10 @@ namespace CppSharp
         private static void Check(Declaration decl)
         {
             if (string.IsNullOrWhiteSpace(decl.Name))
+            {
                 decl.ExplicitlyIgnore();
+                return;
+            }
 
             if (decl.Name.EndsWith("Bitfields", StringComparison.Ordinal))
                 decl.ExplicitlyIgnore();

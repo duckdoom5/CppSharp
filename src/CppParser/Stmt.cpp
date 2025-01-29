@@ -29,8 +29,8 @@ Stmt::Stmt(StmtClass klass)
 
 DeclStmt::DeclStmt()
     : Stmt(StmtClass::DeclStmt)
-    , isSingleDecl(0)
     , singleDecl(nullptr)
+    , isSingleDecl(false)
 {
 }
 
@@ -39,13 +39,13 @@ DEF_VECTOR(DeclStmt, Declaration*, decls)
 NullStmt::NullStmt()
     : Stmt(StmtClass::NullStmt)
     , semiLoc(SourceLocation())
-    , hasLeadingEmptyMacro(0)
+    , hasLeadingEmptyMacro(false)
 {
 }
 
 CompoundStmt::CompoundStmt()
     : Stmt(StmtClass::CompoundStmt)
-    , body_empty(0)
+    , body_empty(false)
     , size(0)
     , body_front(nullptr)
     , body_back(nullptr)
@@ -74,11 +74,11 @@ SwitchCase::SwitchCase(StmtClass klass)
 
 CaseStmt::CaseStmt()
     : SwitchCase(StmtClass::CaseStmt)
+    , caseStmtIsGNURange(false)
     , caseLoc(SourceLocation())
     , ellipsisLoc(SourceLocation())
     , lHS(nullptr)
     , rHS(nullptr)
-    , caseStmtIsGNURange(0)
 {
 }
 
@@ -88,16 +88,26 @@ DefaultStmt::DefaultStmt()
 {
 }
 
+ValueStmt::ValueStmt()
+    : Stmt(StmtClass::ValueStmt)
+{
+}
+
+ValueStmt::ValueStmt(StmtClass klass)
+    : Stmt(klass)
+{
+}
+
 LabelStmt::LabelStmt()
-    : Stmt(StmtClass::LabelStmt)
+    : ValueStmt(StmtClass::LabelStmt)
     , identLoc(SourceLocation())
-    , subStmt(nullptr)
     , name(nullptr)
+    , subStmt(nullptr)
 {
 }
 
 AttributedStmt::AttributedStmt()
-    : Stmt(StmtClass::AttributedStmt)
+    : ValueStmt(StmtClass::AttributedStmt)
     , attrLoc(SourceLocation())
     , subStmt(nullptr)
 {
@@ -105,41 +115,47 @@ AttributedStmt::AttributedStmt()
 
 IfStmt::IfStmt()
     : Stmt(StmtClass::IfStmt)
+    , hasInitStorage(false)
+    , hasVarStorage(false)
+    , hasElseStorage(false)
     , cond(nullptr)
     , then(nullptr)
     , _else(nullptr)
+    , conditionVariableDeclStmt(nullptr)
     , init(nullptr)
     , ifLoc(SourceLocation())
     , elseLoc(SourceLocation())
     , _constexpr(0)
-    , hasInitStorage(0)
-    , hasVarStorage(0)
-    , hasElseStorage(0)
-    , conditionVariableDeclStmt(nullptr)
-    , isObjCAvailabilityCheck(0)
+    , isObjCAvailabilityCheck(false)
+    , lParenLoc(SourceLocation())
+    , rParenLoc(SourceLocation())
 {
 }
 
 SwitchStmt::SwitchStmt()
     : Stmt(StmtClass::SwitchStmt)
+    , hasInitStorage(false)
+    , hasVarStorage(false)
     , cond(nullptr)
     , body(nullptr)
     , init(nullptr)
-    , switchLoc(SourceLocation())
-    , hasInitStorage(0)
-    , hasVarStorage(0)
     , conditionVariableDeclStmt(nullptr)
-    , isAllEnumCasesCovered(0)
+    , switchLoc(SourceLocation())
+    , lParenLoc(SourceLocation())
+    , rParenLoc(SourceLocation())
+    , isAllEnumCasesCovered(false)
 {
 }
 
 WhileStmt::WhileStmt()
     : Stmt(StmtClass::WhileStmt)
+    , hasVarStorage(false)
     , cond(nullptr)
     , body(nullptr)
-    , whileLoc(SourceLocation())
-    , hasVarStorage(0)
     , conditionVariableDeclStmt(nullptr)
+    , whileLoc(SourceLocation())
+    , lParenLoc(SourceLocation())
+    , rParenLoc(SourceLocation())
 {
 }
 
@@ -156,13 +172,13 @@ DoStmt::DoStmt()
 ForStmt::ForStmt()
     : Stmt(StmtClass::ForStmt)
     , init(nullptr)
+    , conditionVariableDeclStmt(nullptr)
     , cond(nullptr)
     , inc(nullptr)
     , body(nullptr)
     , forLoc(SourceLocation())
     , lParenLoc(SourceLocation())
     , rParenLoc(SourceLocation())
-    , conditionVariableDeclStmt(nullptr)
 {
 }
 
@@ -203,8 +219,8 @@ ReturnStmt::ReturnStmt()
 AsmStmt::AsmStmt()
     : Stmt(StmtClass::NoStmt)
     , asmLoc(SourceLocation())
-    , simple(0)
-    , _volatile(0)
+    , simple(false)
+    , _volatile(false)
     , numOutputs(0)
     , numPlusOperands(0)
     , numInputs(0)
@@ -215,8 +231,8 @@ AsmStmt::AsmStmt()
 AsmStmt::AsmStmt(StmtClass klass)
     : Stmt(klass)
     , asmLoc(SourceLocation())
-    , simple(0)
-    , _volatile(0)
+    , simple(false)
+    , _volatile(false)
     , numOutputs(0)
     , numPlusOperands(0)
     , numInputs(0)
@@ -241,7 +257,7 @@ GCCAsmStmt::GCCAsmStmt()
 MSAsmStmt::MSAsmStmt()
     : AsmStmt(StmtClass::MSAsmStmt)
     , lBraceLoc(SourceLocation())
-    , hasBraces(0)
+    , hasBraces(false)
     , numAsmToks(0)
 {
 }
@@ -264,7 +280,7 @@ SEHFinallyStmt::SEHFinallyStmt()
 SEHTryStmt::SEHTryStmt()
     : Stmt(StmtClass::SEHTryStmt)
     , tryLoc(SourceLocation())
-    , isCXXTry(0)
+    , isCXXTry(false)
     , tryBlock(nullptr)
     , handler(nullptr)
     , exceptHandler(nullptr)
@@ -286,6 +302,7 @@ CapturedStmt::CapturedStmt()
     : Stmt(StmtClass::CapturedStmt)
     , capturedStmt(nullptr)
     , capture_size(0)
+    , sourceRange(SourceRange())
 {
 }
 
@@ -328,8 +345,8 @@ CXXForRangeStmt::CXXForRangeStmt()
 MSDependentExistsStmt::MSDependentExistsStmt()
     : Stmt(StmtClass::MSDependentExistsStmt)
     , keywordLoc(SourceLocation())
-    , isIfExists(0)
-    , isIfNotExists(0)
+    , isIfExists(false)
+    , isIfNotExists(false)
     , subStmt(nullptr)
 {
 }
@@ -340,7 +357,7 @@ CoroutineBodyStmt::CtorArgs::CtorArgs()
 
 CoroutineBodyStmt::CoroutineBodyStmt()
     : Stmt(StmtClass::CoroutineBodyStmt)
-    , hasDependentPromiseType(0)
+    , hasDependentPromiseType(false)
     , body(nullptr)
     , promiseDeclStmt(nullptr)
     , initSuspendStmt(nullptr)
@@ -349,8 +366,9 @@ CoroutineBodyStmt::CoroutineBodyStmt()
     , fallthroughHandler(nullptr)
     , allocate(nullptr)
     , deallocate(nullptr)
-    , returnValueInit(nullptr)
     , resultDecl(nullptr)
+    , returnValueInit(nullptr)
+    , returnValue(nullptr)
     , returnStmt(nullptr)
     , returnStmtOnAllocFailure(nullptr)
 {
@@ -358,10 +376,10 @@ CoroutineBodyStmt::CoroutineBodyStmt()
 
 CoreturnStmt::CoreturnStmt()
     : Stmt(StmtClass::CoreturnStmt)
-    , isImplicit(0)
     , keywordLoc(SourceLocation())
     , operand(nullptr)
     , promiseCall(nullptr)
+    , isImplicit(false)
 {
 }
 

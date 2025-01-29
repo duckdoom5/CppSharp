@@ -10,7 +10,7 @@
 #include "Sources.h"
 #include "Types.h"
 
-namespace CppSharp { namespace CppParser { namespace AST {
+namespace CppSharp::CppParser::AST {
 
 class Expr;
 class Declaration;
@@ -20,135 +20,158 @@ enum class StmtClass
     NoStmt = 0,
     GCCAsmStmt = 1,
     MSAsmStmt = 2,
-    AttributedStmt = 3,
-    BreakStmt = 4,
-    CXXCatchStmt = 5,
-    CXXForRangeStmt = 6,
-    CXXTryStmt = 7,
-    CapturedStmt = 8,
-    CompoundStmt = 9,
-    ContinueStmt = 10,
-    CoreturnStmt = 11,
-    CoroutineBodyStmt = 12,
-    DeclStmt = 13,
-    DoStmt = 14,
-    BinaryConditionalOperator = 15,
-    ConditionalOperator = 16,
-    AddrLabelExpr = 17,
-    ArrayInitIndexExpr = 18,
-    ArrayInitLoopExpr = 19,
-    ArraySubscriptExpr = 20,
-    ArrayTypeTraitExpr = 21,
-    AsTypeExpr = 22,
-    AtomicExpr = 23,
-    BinaryOperator = 24,
-    CompoundAssignOperator = 25,
-    BlockExpr = 26,
-    CXXBindTemporaryExpr = 27,
-    CXXBoolLiteralExpr = 28,
-    CXXConstructExpr = 29,
-    CXXTemporaryObjectExpr = 30,
-    CXXDefaultArgExpr = 31,
-    CXXDefaultInitExpr = 32,
-    CXXDeleteExpr = 33,
-    CXXDependentScopeMemberExpr = 34,
-    CXXFoldExpr = 35,
-    CXXInheritedCtorInitExpr = 36,
-    CXXNewExpr = 37,
-    CXXNoexceptExpr = 38,
-    CXXNullPtrLiteralExpr = 39,
-    CXXPseudoDestructorExpr = 40,
-    CXXScalarValueInitExpr = 41,
-    CXXStdInitializerListExpr = 42,
-    CXXThisExpr = 43,
-    CXXThrowExpr = 44,
-    CXXTypeidExpr = 45,
-    CXXUnresolvedConstructExpr = 46,
-    CXXUuidofExpr = 47,
-    CallExpr = 48,
-    CUDAKernelCallExpr = 49,
-    CXXMemberCallExpr = 50,
-    CXXOperatorCallExpr = 51,
-    UserDefinedLiteral = 52,
-    CStyleCastExpr = 53,
-    CXXFunctionalCastExpr = 54,
-    CXXConstCastExpr = 55,
-    CXXDynamicCastExpr = 56,
-    CXXReinterpretCastExpr = 57,
-    CXXStaticCastExpr = 58,
-    ImplicitCastExpr = 60,
-    CharacterLiteral = 61,
-    ChooseExpr = 62,
-    CompoundLiteralExpr = 63,
-    ConvertVectorExpr = 64,
-    CoawaitExpr = 65,
-    CoyieldExpr = 66,
-    DeclRefExpr = 67,
-    DependentCoawaitExpr = 68,
-    DependentScopeDeclRefExpr = 69,
-    DesignatedInitExpr = 70,
-    DesignatedInitUpdateExpr = 71,
-    ExpressionTraitExpr = 72,
-    ExtVectorElementExpr = 73,
-    FixedPointLiteral = 74,
-    FloatingLiteral = 75,
-    ConstantExpr = 76,
-    ExprWithCleanups = 77,
-    FunctionParmPackExpr = 78,
-    GNUNullExpr = 79,
-    GenericSelectionExpr = 80,
-    ImaginaryLiteral = 81,
-    ImplicitValueInitExpr = 82,
-    InitListExpr = 83,
-    IntegerLiteral = 84,
-    LambdaExpr = 85,
-    MSPropertyRefExpr = 86,
-    MSPropertySubscriptExpr = 87,
-    MaterializeTemporaryExpr = 88,
-    MemberExpr = 89,
-    NoInitExpr = 90,
-    OffsetOfExpr = 107,
-    OpaqueValueExpr = 108,
-    UnresolvedLookupExpr = 109,
-    UnresolvedMemberExpr = 110,
-    PackExpansionExpr = 111,
-    ParenExpr = 112,
-    ParenListExpr = 113,
-    PredefinedExpr = 114,
-    PseudoObjectExpr = 115,
-    ShuffleVectorExpr = 116,
-    SizeOfPackExpr = 117,
-    StmtExpr = 118,
-    StringLiteral = 119,
-    SubstNonTypeTemplateParmExpr = 120,
-    SubstNonTypeTemplateParmPackExpr = 121,
-    TypeTraitExpr = 122,
-    TypoExpr = 123,
-    UnaryExprOrTypeTraitExpr = 124,
-    UnaryOperator = 125,
-    VAArgExpr = 126,
-    ForStmt = 127,
-    GotoStmt = 128,
-    IfStmt = 129,
-    IndirectGotoStmt = 130,
-    LabelStmt = 131,
-    MSDependentExistsStmt = 132,
-    NullStmt = 133,
-    ReturnStmt = 188,
-    SEHExceptStmt = 189,
-    SEHFinallyStmt = 190,
-    SEHLeaveStmt = 191,
-    SEHTryStmt = 192,
-    CaseStmt = 193,
-    DefaultStmt = 194,
-    SwitchStmt = 195,
-    WhileStmt = 196,
-
+    BreakStmt = 3,
+    CXXCatchStmt = 4,
+    CXXForRangeStmt = 5,
+    CXXTryStmt = 6,
+    CapturedStmt = 7,
+    CompoundStmt = 8,
+    ContinueStmt = 9,
+    CoreturnStmt = 10,
+    CoroutineBodyStmt = 11,
+    DeclStmt = 12,
+    DoStmt = 13,
+    ForStmt = 14,
+    GotoStmt = 15,
+    IfStmt = 16,
+    IndirectGotoStmt = 17,
+    MSDependentExistsStmt = 18,
+    NullStmt = 19,
+    ReturnStmt = 99,
+    SEHExceptStmt = 100,
+    SEHFinallyStmt = 101,
+    SEHLeaveStmt = 102,
+    SEHTryStmt = 103,
+    CaseStmt = 104,
+    DefaultStmt = 105,
+    SwitchStmt = 106,
+    AttributedStmt = 107,
+    BinaryConditionalOperator = 108,
+    ConditionalOperator = 109,
+    AddrLabelExpr = 110,
+    ArrayInitIndexExpr = 111,
+    ArrayInitLoopExpr = 112,
+    ArraySubscriptExpr = 113,
+    ArrayTypeTraitExpr = 114,
+    AsTypeExpr = 115,
+    AtomicExpr = 116,
+    BinaryOperator = 117,
+    CompoundAssignOperator = 118,
+    BlockExpr = 119,
+    CXXBindTemporaryExpr = 120,
+    CXXBoolLiteralExpr = 121,
+    CXXConstructExpr = 122,
+    CXXTemporaryObjectExpr = 123,
+    CXXDefaultArgExpr = 124,
+    CXXDefaultInitExpr = 125,
+    CXXDeleteExpr = 126,
+    CXXDependentScopeMemberExpr = 127,
+    CXXFoldExpr = 128,
+    CXXInheritedCtorInitExpr = 129,
+    CXXNewExpr = 130,
+    CXXNoexceptExpr = 131,
+    CXXNullPtrLiteralExpr = 132,
+    CXXParenListInitExpr = 133,
+    CXXPseudoDestructorExpr = 134,
+    CXXRewrittenBinaryOperator = 135,
+    CXXScalarValueInitExpr = 136,
+    CXXStdInitializerListExpr = 137,
+    CXXThisExpr = 138,
+    CXXThrowExpr = 139,
+    CXXTypeidExpr = 140,
+    CXXUnresolvedConstructExpr = 141,
+    CXXUuidofExpr = 142,
+    CallExpr = 143,
+    CUDAKernelCallExpr = 144,
+    CXXMemberCallExpr = 145,
+    CXXOperatorCallExpr = 146,
+    UserDefinedLiteral = 147,
+    BuiltinBitCastExpr = 148,
+    CStyleCastExpr = 149,
+    CXXFunctionalCastExpr = 150,
+    CXXAddrspaceCastExpr = 151,
+    CXXConstCastExpr = 152,
+    CXXDynamicCastExpr = 153,
+    CXXReinterpretCastExpr = 154,
+    CXXStaticCastExpr = 155,
+    ImplicitCastExpr = 157,
+    CharacterLiteral = 158,
+    ChooseExpr = 159,
+    CompoundLiteralExpr = 160,
+    ConceptSpecializationExpr = 161,
+    ConvertVectorExpr = 162,
+    CoawaitExpr = 163,
+    CoyieldExpr = 164,
+    DeclRefExpr = 165,
+    DependentCoawaitExpr = 166,
+    DependentScopeDeclRefExpr = 167,
+    DesignatedInitExpr = 168,
+    DesignatedInitUpdateExpr = 169,
+    ExpressionTraitExpr = 170,
+    ExtVectorElementExpr = 171,
+    FixedPointLiteral = 172,
+    FloatingLiteral = 173,
+    ConstantExpr = 174,
+    ExprWithCleanups = 175,
+    FunctionParmPackExpr = 176,
+    GNUNullExpr = 177,
+    GenericSelectionExpr = 178,
+    ImaginaryLiteral = 179,
+    ImplicitValueInitExpr = 180,
+    InitListExpr = 181,
+    IntegerLiteral = 182,
+    LambdaExpr = 183,
+    MSPropertyRefExpr = 184,
+    MSPropertySubscriptExpr = 185,
+    MaterializeTemporaryExpr = 186,
+    MatrixSubscriptExpr = 187,
+    MemberExpr = 188,
+    NoInitExpr = 189,
+    OffsetOfExpr = 208,
+    OpaqueValueExpr = 209,
+    UnresolvedLookupExpr = 210,
+    UnresolvedMemberExpr = 211,
+    PackExpansionExpr = 212,
+    ParenExpr = 213,
+    ParenListExpr = 214,
+    PredefinedExpr = 215,
+    PseudoObjectExpr = 216,
+    RecoveryExpr = 217,
+    RequiresExpr = 218,
+    SYCLUniqueStableNameExpr = 219,
+    ShuffleVectorExpr = 220,
+    SizeOfPackExpr = 221,
+    SourceLocExpr = 222,
+    StmtExpr = 223,
+    StringLiteral = 224,
+    SubstNonTypeTemplateParmExpr = 225,
+    SubstNonTypeTemplateParmPackExpr = 226,
+    TypeTraitExpr = 227,
+    TypoExpr = 228,
+    UnaryExprOrTypeTraitExpr = 229,
+    UnaryOperator = 230,
+    VAArgExpr = 231,
+    LabelStmt = 232,
+    WhileStmt = 233,
 };
 
 class CS_API Stmt
 {
 public:
+    /// <summary>The likelihood of a branch being taken.</summary>
+    enum class Likelihood
+    {
+        /// <summary>Branch has the [[unlikely]] attribute.</summary>
+        Unlikely = -1,
+        /// <summary>
+        /// <para>No attribute set or branches of the IfStmt have</para>
+        /// <para>the same attribute.</para>
+        /// </summary>
+        None = 0,
+        /// <summary>Branch has the [[likely]] attribute.</summary>
+        Likely = 1
+    };
+
     Stmt();
     Stmt(StmtClass klass);
     StmtClass stmtClass;
@@ -201,11 +224,11 @@ class CS_API CaseStmt : public SwitchCase
 {
 public:
     CaseStmt();
+    bool caseStmtIsGNURange;
     SourceLocation caseLoc;
     SourceLocation ellipsisLoc;
     Expr* lHS;
     Expr* rHS;
-    bool caseStmtIsGNURange;
 };
 
 class CS_API DefaultStmt : public SwitchCase
@@ -215,16 +238,24 @@ public:
     SourceLocation defaultLoc;
 };
 
-class CS_API LabelStmt : public Stmt
+class CS_API ValueStmt : public Stmt
+{
+public:
+    ValueStmt();
+    ValueStmt(StmtClass klass);
+};
+
+class CS_API LabelStmt : public ValueStmt
 {
 public:
     LabelStmt();
     SourceLocation identLoc;
-    Stmt* subStmt;
     const char* name;
+    Stmt* subStmt;
+    bool sideEntry;
 };
 
-class CS_API AttributedStmt : public Stmt
+class CS_API AttributedStmt : public ValueStmt
 {
 public:
     AttributedStmt();
@@ -236,31 +267,35 @@ class CS_API IfStmt : public Stmt
 {
 public:
     IfStmt();
-    Expr* cond;
-    Stmt* then;
-    Stmt* _else;
-    Stmt* init;
-    SourceLocation ifLoc;
-    SourceLocation elseLoc;
     bool _constexpr;
     bool hasInitStorage;
     bool hasVarStorage;
     bool hasElseStorage;
+    Expr* cond;
+    Stmt* then;
+    Stmt* _else;
     DeclStmt* conditionVariableDeclStmt;
+    Stmt* init;
+    SourceLocation ifLoc;
+    SourceLocation elseLoc;
     bool isObjCAvailabilityCheck;
+    SourceLocation lParenLoc;
+    SourceLocation rParenLoc;
 };
 
 class CS_API SwitchStmt : public Stmt
 {
 public:
     SwitchStmt();
+    bool hasInitStorage;
+    bool hasVarStorage;
     Expr* cond;
     Stmt* body;
     Stmt* init;
-    SourceLocation switchLoc;
-    bool hasInitStorage;
-    bool hasVarStorage;
     DeclStmt* conditionVariableDeclStmt;
+    SourceLocation switchLoc;
+    SourceLocation lParenLoc;
+    SourceLocation rParenLoc;
     bool isAllEnumCasesCovered;
 };
 
@@ -268,11 +303,13 @@ class CS_API WhileStmt : public Stmt
 {
 public:
     WhileStmt();
+    bool hasVarStorage;
     Expr* cond;
     Stmt* body;
-    SourceLocation whileLoc;
-    bool hasVarStorage;
     DeclStmt* conditionVariableDeclStmt;
+    SourceLocation whileLoc;
+    SourceLocation lParenLoc;
+    SourceLocation rParenLoc;
 };
 
 class CS_API DoStmt : public Stmt
@@ -291,13 +328,13 @@ class CS_API ForStmt : public Stmt
 public:
     ForStmt();
     Stmt* init;
+    DeclStmt* conditionVariableDeclStmt;
     Expr* cond;
     Expr* inc;
     Stmt* body;
     SourceLocation forLoc;
     SourceLocation lParenLoc;
     SourceLocation rParenLoc;
-    DeclStmt* conditionVariableDeclStmt;
 };
 
 class CS_API GotoStmt : public Stmt
@@ -430,6 +467,10 @@ public:
 class CS_API CapturedStmt : public Stmt
 {
 public:
+    /// <summary>
+    /// <para>The different capture forms: by 'this', by reference, capture for</para>
+    /// <para>variable-length array type etc.</para>
+    /// </summary>
     enum class VariableCaptureKind
     {
         This = 0,
@@ -454,6 +495,7 @@ public:
     VECTOR(Expr*, capture_inits)
     Stmt* capturedStmt;
     unsigned int capture_size;
+    SourceRange sourceRange;
 };
 
 class CS_API CXXCatchStmt : public Stmt
@@ -508,18 +550,31 @@ class CS_API CoroutineBodyStmt : public Stmt
 public:
     enum class SubStmt
     {
+        /// <summary>The body of the coroutine.</summary>
         Body = 0,
+        /// <summary>The promise statement.</summary>
         Promise = 1,
+        /// <summary>The initial suspend statement, run before the body.</summary>
         InitSuspend = 2,
+        /// <summary>The final suspend statement, run after the body.</summary>
         FinalSuspend = 3,
+        /// <summary>Handler for exceptions thrown in the body.</summary>
         OnException = 4,
+        /// <summary>Handler for control flow falling off the body.</summary>
         OnFallthrough = 5,
+        /// <summary>Coroutine frame memory allocation.</summary>
         Allocate = 6,
+        /// <summary>Coroutine frame memory deallocation.</summary>
         Deallocate = 7,
-        ReturnValue = 8,
-        ResultDecl = 9,
+        /// <summary>Declaration holding the result of get_return_object.</summary>
+        ResultDecl = 8,
+        /// <summary>Return value for thunk function: p.get_return_object().</summary>
+        ReturnValue = 9,
+        /// <summary>Return statement for the thunk function.</summary>
         ReturnStmt = 10,
+        /// <summary>Return statement if allocation failed.</summary>
         ReturnStmtOnAllocFailure = 11,
+        /// <summary>First offset for move construction of parameter copies.</summary>
         FirstParamMove = 12
     };
 
@@ -539,8 +594,9 @@ public:
     Stmt* fallthroughHandler;
     Expr* allocate;
     Expr* deallocate;
-    Expr* returnValueInit;
     Stmt* resultDecl;
+    Expr* returnValueInit;
+    Expr* returnValue;
     Stmt* returnStmt;
     Stmt* returnStmtOnAllocFailure;
 };
@@ -556,10 +612,10 @@ public:
     };
 
     CoreturnStmt();
-    bool isImplicit;
     SourceLocation keywordLoc;
     Expr* operand;
     Expr* promiseCall;
+    bool isImplicit;
 };
 
 } } }

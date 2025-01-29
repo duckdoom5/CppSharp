@@ -57,7 +57,7 @@ namespace CppSharp.AST
             return true;
         }
 
-        public virtual bool VisitLabelStmt(LabelStmt stmt)
+        public virtual bool VisitValueStmt(ValueStmt stmt)
         {
             if (!VisitStmt(stmt))
                 return false;
@@ -65,9 +65,17 @@ namespace CppSharp.AST
             return true;
         }
 
+        public virtual bool VisitLabelStmt(LabelStmt stmt)
+        {
+            if (!VisitValueStmt(stmt))
+                return false;
+
+            return true;
+        }
+
         public virtual bool VisitAttributedStmt(AttributedStmt stmt)
         {
-            if (!VisitStmt(stmt))
+            if (!VisitValueStmt(stmt))
                 return false;
 
             return true;
@@ -267,7 +275,7 @@ namespace CppSharp.AST
 
         public virtual bool VisitExpr(Expr stmt)
         {
-            if (!VisitStmt(stmt))
+            if (!VisitValueStmt(stmt))
                 return false;
 
             return true;
@@ -1099,6 +1107,7 @@ namespace CppSharp.AST
         T VisitSwitchCase(SwitchCase stmt);
         T VisitCaseStmt(CaseStmt stmt);
         T VisitDefaultStmt(DefaultStmt stmt);
+        T VisitValueStmt(ValueStmt stmt);
         T VisitLabelStmt(LabelStmt stmt);
         T VisitAttributedStmt(AttributedStmt stmt);
         T VisitIfStmt(IfStmt stmt);

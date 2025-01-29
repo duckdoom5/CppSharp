@@ -20,6 +20,7 @@ namespace CppSharp
         public abstract TRet VisitCompoundStmt(CompoundStmt stmt);
         public abstract TRet VisitCaseStmt(CaseStmt stmt);
         public abstract TRet VisitDefaultStmt(DefaultStmt stmt);
+        public abstract TRet VisitValueStmt(ValueStmt stmt);
         public abstract TRet VisitLabelStmt(LabelStmt stmt);
         public abstract TRet VisitAttributedStmt(AttributedStmt stmt);
         public abstract TRet VisitIfStmt(IfStmt stmt);
@@ -62,11 +63,6 @@ namespace CppSharp
                 {
                     var _stmt = MSAsmStmt.__CreateInstance(stmt.__Instance);
                     return VisitMSAsmStmt(_stmt);
-                }
-                case StmtClass.AttributedStmt:
-                {
-                    var _stmt = AttributedStmt.__CreateInstance(stmt.__Instance);
-                    return VisitAttributedStmt(_stmt);
                 }
                 case StmtClass.BreakStmt:
                 {
@@ -122,6 +118,81 @@ namespace CppSharp
                 {
                     var _stmt = DoStmt.__CreateInstance(stmt.__Instance);
                     return VisitDoStmt(_stmt);
+                }
+                case StmtClass.ForStmt:
+                {
+                    var _stmt = ForStmt.__CreateInstance(stmt.__Instance);
+                    return VisitForStmt(_stmt);
+                }
+                case StmtClass.GotoStmt:
+                {
+                    var _stmt = GotoStmt.__CreateInstance(stmt.__Instance);
+                    return VisitGotoStmt(_stmt);
+                }
+                case StmtClass.IfStmt:
+                {
+                    var _stmt = IfStmt.__CreateInstance(stmt.__Instance);
+                    return VisitIfStmt(_stmt);
+                }
+                case StmtClass.IndirectGotoStmt:
+                {
+                    var _stmt = IndirectGotoStmt.__CreateInstance(stmt.__Instance);
+                    return VisitIndirectGotoStmt(_stmt);
+                }
+                case StmtClass.MSDependentExistsStmt:
+                {
+                    var _stmt = MSDependentExistsStmt.__CreateInstance(stmt.__Instance);
+                    return VisitMSDependentExistsStmt(_stmt);
+                }
+                case StmtClass.NullStmt:
+                {
+                    var _stmt = NullStmt.__CreateInstance(stmt.__Instance);
+                    return VisitNullStmt(_stmt);
+                }
+                case StmtClass.ReturnStmt:
+                {
+                    var _stmt = ReturnStmt.__CreateInstance(stmt.__Instance);
+                    return VisitReturnStmt(_stmt);
+                }
+                case StmtClass.SEHExceptStmt:
+                {
+                    var _stmt = SEHExceptStmt.__CreateInstance(stmt.__Instance);
+                    return VisitSEHExceptStmt(_stmt);
+                }
+                case StmtClass.SEHFinallyStmt:
+                {
+                    var _stmt = SEHFinallyStmt.__CreateInstance(stmt.__Instance);
+                    return VisitSEHFinallyStmt(_stmt);
+                }
+                case StmtClass.SEHLeaveStmt:
+                {
+                    var _stmt = SEHLeaveStmt.__CreateInstance(stmt.__Instance);
+                    return VisitSEHLeaveStmt(_stmt);
+                }
+                case StmtClass.SEHTryStmt:
+                {
+                    var _stmt = SEHTryStmt.__CreateInstance(stmt.__Instance);
+                    return VisitSEHTryStmt(_stmt);
+                }
+                case StmtClass.CaseStmt:
+                {
+                    var _stmt = CaseStmt.__CreateInstance(stmt.__Instance);
+                    return VisitCaseStmt(_stmt);
+                }
+                case StmtClass.DefaultStmt:
+                {
+                    var _stmt = DefaultStmt.__CreateInstance(stmt.__Instance);
+                    return VisitDefaultStmt(_stmt);
+                }
+                case StmtClass.SwitchStmt:
+                {
+                    var _stmt = SwitchStmt.__CreateInstance(stmt.__Instance);
+                    return VisitSwitchStmt(_stmt);
+                }
+                case StmtClass.AttributedStmt:
+                {
+                    var _stmt = AttributedStmt.__CreateInstance(stmt.__Instance);
+                    return VisitAttributedStmt(_stmt);
                 }
                 case StmtClass.BinaryConditionalOperator:
                 {
@@ -598,80 +669,10 @@ namespace CppSharp
                     var _stmt = VAArgExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
-                case StmtClass.ForStmt:
-                {
-                    var _stmt = ForStmt.__CreateInstance(stmt.__Instance);
-                    return VisitForStmt(_stmt);
-                }
-                case StmtClass.GotoStmt:
-                {
-                    var _stmt = GotoStmt.__CreateInstance(stmt.__Instance);
-                    return VisitGotoStmt(_stmt);
-                }
-                case StmtClass.IfStmt:
-                {
-                    var _stmt = IfStmt.__CreateInstance(stmt.__Instance);
-                    return VisitIfStmt(_stmt);
-                }
-                case StmtClass.IndirectGotoStmt:
-                {
-                    var _stmt = IndirectGotoStmt.__CreateInstance(stmt.__Instance);
-                    return VisitIndirectGotoStmt(_stmt);
-                }
                 case StmtClass.LabelStmt:
                 {
                     var _stmt = LabelStmt.__CreateInstance(stmt.__Instance);
                     return VisitLabelStmt(_stmt);
-                }
-                case StmtClass.MSDependentExistsStmt:
-                {
-                    var _stmt = MSDependentExistsStmt.__CreateInstance(stmt.__Instance);
-                    return VisitMSDependentExistsStmt(_stmt);
-                }
-                case StmtClass.NullStmt:
-                {
-                    var _stmt = NullStmt.__CreateInstance(stmt.__Instance);
-                    return VisitNullStmt(_stmt);
-                }
-                case StmtClass.ReturnStmt:
-                {
-                    var _stmt = ReturnStmt.__CreateInstance(stmt.__Instance);
-                    return VisitReturnStmt(_stmt);
-                }
-                case StmtClass.SEHExceptStmt:
-                {
-                    var _stmt = SEHExceptStmt.__CreateInstance(stmt.__Instance);
-                    return VisitSEHExceptStmt(_stmt);
-                }
-                case StmtClass.SEHFinallyStmt:
-                {
-                    var _stmt = SEHFinallyStmt.__CreateInstance(stmt.__Instance);
-                    return VisitSEHFinallyStmt(_stmt);
-                }
-                case StmtClass.SEHLeaveStmt:
-                {
-                    var _stmt = SEHLeaveStmt.__CreateInstance(stmt.__Instance);
-                    return VisitSEHLeaveStmt(_stmt);
-                }
-                case StmtClass.SEHTryStmt:
-                {
-                    var _stmt = SEHTryStmt.__CreateInstance(stmt.__Instance);
-                    return VisitSEHTryStmt(_stmt);
-                }
-                case StmtClass.CaseStmt:
-                {
-                    var _stmt = CaseStmt.__CreateInstance(stmt.__Instance);
-                    return VisitCaseStmt(_stmt);
-                }
-                case StmtClass.DefaultStmt:
-                {
-                    var _stmt = DefaultStmt.__CreateInstance(stmt.__Instance);
-                    return VisitDefaultStmt(_stmt);
-                }
-                case StmtClass.SwitchStmt:
-                {
-                    var _stmt = SwitchStmt.__CreateInstance(stmt.__Instance);
-                    return VisitSwitchStmt(_stmt);
                 }
                 case StmtClass.WhileStmt:
                 {
@@ -741,12 +742,12 @@ namespace CppSharp
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.KeywordLoc = VisitSourceLocation(stmt.KeywordLoc);
             _stmt.ColonLoc = VisitSourceLocation(stmt.ColonLoc);
-            _stmt.SubStmt = VisitStatement(stmt.SubStmt) as AST.Stmt;
+            _stmt.CaseStmtIsGNURange = stmt.CaseStmtIsGNURange;
             _stmt.CaseLoc = VisitSourceLocation(stmt.CaseLoc);
             _stmt.EllipsisLoc = VisitSourceLocation(stmt.EllipsisLoc);
             _stmt.LHS = VisitExpression(stmt.LHS) as AST.Expr;
             _stmt.RHS = VisitExpression(stmt.RHS) as AST.Expr;
-            _stmt.CaseStmtIsGNURange = stmt.CaseStmtIsGNURange;
+            _stmt.SubStmt = VisitStatement(stmt.SubStmt) as AST.Stmt;
             return _stmt;
         }
 
@@ -763,6 +764,15 @@ namespace CppSharp
             return _stmt;
         }
 
+        public override AST.Stmt VisitValueStmt(ValueStmt stmt)
+        {
+            var _stmt = new AST.ValueStmt();
+            _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
+            _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
+            _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
+            return _stmt;
+        }
+
         public override AST.Stmt VisitLabelStmt(LabelStmt stmt)
         {
             var _stmt = new AST.LabelStmt();
@@ -770,8 +780,8 @@ namespace CppSharp
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.IdentLoc = VisitSourceLocation(stmt.IdentLoc);
-            _stmt.SubStmt = VisitStatement(stmt.SubStmt) as AST.Stmt;
             _stmt.Name = stmt.Name;
+            _stmt.SubStmt = VisitStatement(stmt.SubStmt) as AST.Stmt;
             return _stmt;
         }
 
@@ -792,18 +802,20 @@ namespace CppSharp
             _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
+            _stmt.HasInitStorage = stmt.HasInitStorage;
+            _stmt.HasVarStorage = stmt.HasVarStorage;
+            _stmt.HasElseStorage = stmt.HasElseStorage;
             _stmt.Cond = VisitExpression(stmt.Cond) as AST.Expr;
             _stmt.Then = VisitStatement(stmt.Then) as AST.Stmt;
             _stmt.Else = VisitStatement(stmt.Else) as AST.Stmt;
+            _stmt.ConditionVariableDeclStmt = VisitStatement(stmt.ConditionVariableDeclStmt) as AST.DeclStmt;
             _stmt.Init = VisitStatement(stmt.Init) as AST.Stmt;
             _stmt.IfLoc = VisitSourceLocation(stmt.IfLoc);
             _stmt.ElseLoc = VisitSourceLocation(stmt.ElseLoc);
             _stmt.Constexpr = stmt.Constexpr;
-            _stmt.HasInitStorage = stmt.HasInitStorage;
-            _stmt.HasVarStorage = stmt.HasVarStorage;
-            _stmt.HasElseStorage = stmt.HasElseStorage;
-            _stmt.ConditionVariableDeclStmt = VisitStatement(stmt.ConditionVariableDeclStmt) as AST.DeclStmt;
             _stmt.IsObjCAvailabilityCheck = stmt.IsObjCAvailabilityCheck;
+            _stmt.LParenLoc = VisitSourceLocation(stmt.LParenLoc);
+            _stmt.RParenLoc = VisitSourceLocation(stmt.RParenLoc);
             return _stmt;
         }
 
@@ -813,13 +825,15 @@ namespace CppSharp
             _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
+            _stmt.HasInitStorage = stmt.HasInitStorage;
+            _stmt.HasVarStorage = stmt.HasVarStorage;
             _stmt.Cond = VisitExpression(stmt.Cond) as AST.Expr;
             _stmt.Body = VisitStatement(stmt.Body) as AST.Stmt;
             _stmt.Init = VisitStatement(stmt.Init) as AST.Stmt;
-            _stmt.SwitchLoc = VisitSourceLocation(stmt.SwitchLoc);
-            _stmt.HasInitStorage = stmt.HasInitStorage;
-            _stmt.HasVarStorage = stmt.HasVarStorage;
             _stmt.ConditionVariableDeclStmt = VisitStatement(stmt.ConditionVariableDeclStmt) as AST.DeclStmt;
+            _stmt.SwitchLoc = VisitSourceLocation(stmt.SwitchLoc);
+            _stmt.LParenLoc = VisitSourceLocation(stmt.LParenLoc);
+            _stmt.RParenLoc = VisitSourceLocation(stmt.RParenLoc);
             _stmt.IsAllEnumCasesCovered = stmt.IsAllEnumCasesCovered;
             return _stmt;
         }
@@ -830,11 +844,13 @@ namespace CppSharp
             _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
+            _stmt.HasVarStorage = stmt.HasVarStorage;
             _stmt.Cond = VisitExpression(stmt.Cond) as AST.Expr;
             _stmt.Body = VisitStatement(stmt.Body) as AST.Stmt;
-            _stmt.WhileLoc = VisitSourceLocation(stmt.WhileLoc);
-            _stmt.HasVarStorage = stmt.HasVarStorage;
             _stmt.ConditionVariableDeclStmt = VisitStatement(stmt.ConditionVariableDeclStmt) as AST.DeclStmt;
+            _stmt.WhileLoc = VisitSourceLocation(stmt.WhileLoc);
+            _stmt.LParenLoc = VisitSourceLocation(stmt.LParenLoc);
+            _stmt.RParenLoc = VisitSourceLocation(stmt.RParenLoc);
             return _stmt;
         }
 
@@ -859,13 +875,13 @@ namespace CppSharp
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.Init = VisitStatement(stmt.Init) as AST.Stmt;
+            _stmt.ConditionVariableDeclStmt = VisitStatement(stmt.ConditionVariableDeclStmt) as AST.DeclStmt;
             _stmt.Cond = VisitExpression(stmt.Cond) as AST.Expr;
             _stmt.Inc = VisitExpression(stmt.Inc) as AST.Expr;
             _stmt.Body = VisitStatement(stmt.Body) as AST.Stmt;
             _stmt.ForLoc = VisitSourceLocation(stmt.ForLoc);
             _stmt.LParenLoc = VisitSourceLocation(stmt.LParenLoc);
             _stmt.RParenLoc = VisitSourceLocation(stmt.RParenLoc);
-            _stmt.ConditionVariableDeclStmt = VisitStatement(stmt.ConditionVariableDeclStmt) as AST.DeclStmt;
             return _stmt;
         }
 
@@ -1036,6 +1052,7 @@ namespace CppSharp
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.capturedStmt = VisitStatement(stmt.capturedStmt) as AST.Stmt;
             _stmt.CaptureSize = stmt.CaptureSize;
+            _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             for (uint i = 0; i < stmt.GetcaptureInitsCount; i++)
             {
                 var _E = stmt.GetcaptureInits(i);
@@ -1110,7 +1127,7 @@ namespace CppSharp
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.HasDependentPromiseType = stmt.HasDependentPromiseType;
-            _stmt.Body = VisitStatement(stmt.Body) as AST.Stmt;
+            _stmt.Body = VisitStatement(stmt.Body) as AST.CompoundStmt;
             _stmt.PromiseDeclStmt = VisitStatement(stmt.PromiseDeclStmt) as AST.Stmt;
             _stmt.InitSuspendStmt = VisitStatement(stmt.InitSuspendStmt) as AST.Stmt;
             _stmt.FinalSuspendStmt = VisitStatement(stmt.FinalSuspendStmt) as AST.Stmt;
@@ -1118,8 +1135,9 @@ namespace CppSharp
             _stmt.FallthroughHandler = VisitStatement(stmt.FallthroughHandler) as AST.Stmt;
             _stmt.Allocate = VisitExpression(stmt.Allocate) as AST.Expr;
             _stmt.Deallocate = VisitExpression(stmt.Deallocate) as AST.Expr;
-            _stmt.ReturnValueInit = VisitExpression(stmt.ReturnValueInit) as AST.Expr;
             _stmt.ResultDecl = VisitStatement(stmt.ResultDecl) as AST.Stmt;
+            _stmt.ReturnValueInit = VisitExpression(stmt.ReturnValueInit) as AST.Expr;
+            _stmt.ReturnValue = VisitExpression(stmt.ReturnValue) as AST.Expr;
             _stmt.ReturnStmt = VisitStatement(stmt.ReturnStmt) as AST.Stmt;
             _stmt.ReturnStmtOnAllocFailure = VisitStatement(stmt.ReturnStmtOnAllocFailure) as AST.Stmt;
             return _stmt;
@@ -1131,10 +1149,10 @@ namespace CppSharp
             _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
-            _stmt.IsImplicit = stmt.IsImplicit;
             _stmt.KeywordLoc = VisitSourceLocation(stmt.KeywordLoc);
             _stmt.Operand = VisitExpression(stmt.Operand) as AST.Expr;
             _stmt.PromiseCall = VisitExpression(stmt.PromiseCall) as AST.Expr;
+            _stmt.IsImplicit = stmt.IsImplicit;
             return _stmt;
         }
     }

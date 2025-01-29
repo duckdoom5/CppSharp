@@ -672,7 +672,6 @@ namespace CppSharp
             _expr.ReferencedDeclOfCallee = VisitDeclaration(expr.ReferencedDeclOfCallee) as AST.Declaration;
             _expr.HasPlaceholderType = expr.HasPlaceholderType;
             _expr.Location = VisitSourceLocation(expr.Location);
-            _expr.HadMultipleCandidates = expr.HadMultipleCandidates;
             _expr.HasQualifier = expr.HasQualifier;
             _expr.FoundDecl = VisitDeclaration(expr.FoundDecl) as AST.Declaration;
             _expr.HasTemplateKWAndArgsInfo = expr.HasTemplateKWAndArgsInfo;
@@ -682,6 +681,7 @@ namespace CppSharp
             _expr.HasTemplateKeyword = expr.HasTemplateKeyword;
             _expr.HasExplicitTemplateArgs = expr.HasExplicitTemplateArgs;
             _expr.NumTemplateArgs = expr.NumTemplateArgs;
+            _expr.HadMultipleCandidates = expr.HadMultipleCandidates;
             _expr.RefersToEnclosingVariableOrCapture = expr.RefersToEnclosingVariableOrCapture;
             return _expr;
         }

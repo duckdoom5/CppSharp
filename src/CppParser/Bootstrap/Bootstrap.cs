@@ -972,7 +972,7 @@ namespace CppSharp
             GenerateIncludes();
             NewLine();
 
-            WriteLine("namespace CppSharp { namespace CppParser { namespace AST {");
+            WriteLine("namespace CppSharp::CppParser::AST {");
             NewLine();
 
             WriteLine("class Expr;");
@@ -1152,6 +1152,9 @@ namespace CppSharp
         {
             if (property.Type.IsPointer())
                 return "nullptr";
+            
+            if (property.Type.IsPrimitiveType(PrimitiveType.Bool))
+                return "false";
 
             var typeName = GetDeclTypeName(property);
             if (property.Type.TryGetClass(out Class @class))
@@ -1844,7 +1847,7 @@ namespace CppSharp
             TypePrinter typePrinter)
         {
             var declType = GetDeclType(type, typePrinter);
-            var typeName = declType.Visit(typePrinter).Type;
+            var typeName = declType.Visit(typePrinter).ToString();
             typeName = CleanClangNamespaceFromName(typeName);
 
             if (typeName.Contains("QualType"))

@@ -94,6 +94,7 @@ namespace CppSharp.Tests
 
         public static void Main(string[] args)
         {
+            Diagnostics.Level = DiagnosticKind.Debug;
             ConsoleDriver.Run(new CommonTestsGenerator(GeneratorKind.CLI));
             ConsoleDriver.Run(new CommonTestsGenerator(GeneratorKind.CSharp));
         }

@@ -2732,8 +2732,9 @@ internal static{(@new ? " new" : string.Empty)} {printedClass} __GetInstance({Ty
                 goto SkipImpl;
             }
 
-            if (method.SynthKind == FunctionSynthKind.DefaultValueOverload ||
-                method.SynthKind == FunctionSynthKind.ComplementOperator)
+            if (method.SynthKind is FunctionSynthKind.DefaultValueOverload 
+                or FunctionSynthKind.ComplementOperator
+                or FunctionSynthKind.DefaultOperator)
             {
                 GenerateMethodBody(@class, method);
             }
@@ -2793,7 +2794,7 @@ internal static{(@new ? " new" : string.Empty)} {printedClass} __GetInstance({Ty
                 }
                 if (method.IsOperator)
                 {
-                    GenerateOperator(method, returnType);
+                    GenerateRefTypeOperator(method, returnType);
                 }
                 else if (method.IsVirtual)
                 {
@@ -2820,7 +2821,7 @@ internal static{(@new ? " new" : string.Empty)} {printedClass} __GetInstance({Ty
                 }
                 else if (method.IsOperator)
                 {
-                    GenerateOperator(method, returnType);
+                    GenerateValueTypeOperator(method, returnType);
                 }
                 else
                 {
@@ -2968,7 +2969,7 @@ internal static{(@new ? " new" : string.Empty)} {printedClass} __GetInstance({Ty
             return delegateId;
         }
 
-        private void GenerateOperator(Method method, QualifiedType returnType)
+        private void GenerateRefTypeOperator(Method method, QualifiedType returnType)
         {
             if (method.SynthKind == FunctionSynthKind.ComplementOperator)
             {
@@ -3022,8 +3023,88 @@ internal static{(@new ? " new" : string.Empty)} {printedClass} __GetInstance({Ty
                     method.OperatorKind == CXXOperatorKind.EqualEqual ? string.Empty : ")");
             }
 
+            if (method.IsDefaulted)
+            {
+                switch (method.OperatorKind)
+                {
+                    case CXXOperatorKind.EqualEqual:
+                        break;
+                }
+
+                return;
+            }
+
             GenerateInternalFunctionCall(method, returnType: returnType);
         }
+
+        private void GenerateValueTypeOperator(Method method, QualifiedType returnType)
+        {
+            if (method.SynthKind == FunctionSynthKind.ComplementOperator)
+            {
+                Parameter parameter = method.Parameters[0];
+                if (method.Kind == CXXMethodKind.Conversion)
+                {
+                    // To avoid ambiguity when having the multiple inheritance pass enabled
+                    var paramType = parameter.Type.SkipPointerRefs().Desugar();
+                    paramType = (paramType.GetPointee() ?? paramType).Desugar();
+                    Class paramClass;
+                    Class @interface = null;
+                    if (paramType.TryGetClass(out paramClass))
+                        @interface = paramClass.GetInterface();
+
+                    var paramName = string.Format("{0}{1}",
+                        !parameter.QualifiedType.IsConstRefToPrimitive() &&
+                        parameter.Type.IsPrimitiveTypeConvertibleToRef() ?
+                        "ref *" : string.Empty,
+                        parameter.Name);
+                    var printedType = method.ConversionType.Visit(TypePrinter);
+                    if (@interface != null)
+                    {
+                        var printedInterface = @interface.Visit(TypePrinter);
+                        WriteLine($"return new {printedType}(({printedInterface}) {paramName});");
+                    }
+                    else
+                        WriteLine($"return new {printedType}({paramName});");
+                }
+                else
+                {
+                    var @operator = Operators.GetOperatorOverloadPair(method.OperatorKind);
+
+                    WriteLine("return !({0} {1} {2});", parameter.Name,
+                        @operator, method.Parameters[1].Name);
+                }
+                return;
+            }
+
+            if (method.IsDefaulted)
+            {
+                switch (method.OperatorKind)
+                {
+                    case CXXOperatorKind.EqualEqual:
+                        break;
+                }
+
+                return;
+            }
+
+            if (method.OperatorKind == CXXOperatorKind.EqualEqual ||
+                method.OperatorKind == CXXOperatorKind.ExclaimEqual)
+            {
+                WriteLine("bool {0}Null = ReferenceEquals({0}, null);",
+                    method.Parameters[0].Name);
+                WriteLine("bool {0}Null = ReferenceEquals({0}, null);",
+                    method.Parameters[1].Name);
+                WriteLine("if ({0}Null || {1}Null)",
+                    method.Parameters[0].Name, method.Parameters[1].Name);
+                WriteLineIndent("return {0}{1}Null && {2}Null{3};",
+                    method.OperatorKind == CXXOperatorKind.EqualEqual ? string.Empty : "!(",
+                    method.Parameters[0].Name, method.Parameters[1].Name,
+                    method.OperatorKind == CXXOperatorKind.EqualEqual ? string.Empty : ")");
+            }
+
+            GenerateInternalFunctionCall(method, returnType: returnType);
+        }
+
 
         private void GenerateClassConstructor(Method method, Class @class)
         {

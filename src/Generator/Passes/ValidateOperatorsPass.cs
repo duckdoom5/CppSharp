@@ -139,6 +139,7 @@ namespace CppSharp.Passes
                 case CXXOperatorKind.Delete:
                 case CXXOperatorKind.Array_New:
                 case CXXOperatorKind.Array_Delete:
+                case CXXOperatorKind.Spaceship:
                 default:
                     return false;
             }

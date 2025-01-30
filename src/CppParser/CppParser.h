@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <clang/Basic/Version.inc>
+
 #include "AST.h"
 #include "Helpers.h"
 #include "Target.h"
@@ -20,10 +22,14 @@ using namespace CppSharp::CppParser::AST;
 
 struct CS_API CppParserOptions
 {
-    CppParserOptions();
-    ~CppParserOptions();
+    CppParserOptions() {}
 
-    std::string getClangVersion();
+    constexpr static std::string_view getClangVersion()
+    {
+        return clangVersion;
+    }
+
+    std::string targetTriple;
 
     VECTOR_STRING(Arguments)
     VECTOR_STRING(CompilationOptions)
@@ -38,29 +44,25 @@ struct CS_API CppParserOptions
     VECTOR_STRING(SupportedStdTypes)
     VECTOR_STRING(SupportedFunctionTemplates)
 
-    CppSharp::CppParser::AST::ASTContext* ASTContext;
+    CppSharp::CppParser::AST::ASTContext* ASTContext = nullptr;
 
-    int toolSetToUse;
-    std::string targetTriple;
+    int toolSetToUse = 0;
 
-    bool noStandardIncludes;
-    bool noBuiltinIncludes;
-    bool microsoftMode;
-    bool verbose;
-    bool unityBuild;
-    bool skipPrivateDeclarations;
-    bool skipLayoutInfo;
-    bool skipFunctionBodies;
+    bool noStandardIncludes = false;
+    bool noBuiltinIncludes = false;
+    bool microsoftMode = false;
+    bool verbose = false;
+    bool unityBuild = false;
+    bool skipPrivateDeclarations = true;
+    bool skipLayoutInfo = false;
+    bool skipFunctionBodies = true;
 
 private:
-    std::string clangVersion;
+    static constexpr std::string_view clangVersion{ CLANG_VERSION_STRING };
 };
 
 struct CS_API CppLinkerOptions
 {
-    CppLinkerOptions();
-    ~CppLinkerOptions();
-
     VECTOR_STRING(Arguments)
     VECTOR_STRING(LibraryDirs)
     VECTOR_STRING(Libraries)
@@ -76,10 +78,7 @@ enum class ParserDiagnosticLevel
 };
 
 struct CS_API ParserDiagnostic
-{
-    ParserDiagnostic();
-    ParserDiagnostic(const ParserDiagnostic&);
-    ~ParserDiagnostic();
+{    
     std::string fileName;
     std::string message;
     ParserDiagnosticLevel level { ParserDiagnosticLevel::Ignored };
@@ -98,8 +97,8 @@ class Parser;
 
 struct CS_API ParserResult
 {
-    ParserResult();
-    ParserResult(const ParserResult&);
+    ParserResult() {}
+    ParserResult(const ParserResult&) = default;
     ~ParserResult();
 
     ParserResultKind kind = ParserResultKind::Error;

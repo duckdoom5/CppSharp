@@ -1,7 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using CppSharp.AST;
 using CppSharp.AST.Extensions;
 using CppSharp.Generators;
+using CppSharp.Types.Std.CLI;
 
 namespace CppSharp.Passes
 {
@@ -10,6 +12,16 @@ namespace CppSharp.Passes
     /// </summary>
     public class CheckOperatorsOverloadsPass : TranslationUnitPass
     {
+        private static readonly CXXOperatorKind[] ComparisonOpKinds =
+        {
+            CXXOperatorKind.EqualEqual,
+            CXXOperatorKind.ExclaimEqual,
+            CXXOperatorKind.Less,
+            CXXOperatorKind.Greater,
+            CXXOperatorKind.LessEqual,
+            CXXOperatorKind.GreaterEqual
+        };
+
         public CheckOperatorsOverloadsPass() => VisitOptions.ResetFlags(
             VisitFlags.ClassMethods | VisitFlags.ClassProperties |
             VisitFlags.ClassTemplateSpecializations);
@@ -36,6 +48,8 @@ namespace CppSharp.Passes
 
                 HandleMissingOperatorOverloadPair(@class, CXXOperatorKind.LessEqual,
                                                   CXXOperatorKind.GreaterEqual);
+
+                HandleSpaceshipOperatorOverload(@class);
             }
 
             return false;
@@ -70,7 +84,7 @@ namespace CppSharp.Passes
 
                 @operator.Parameters.Insert(0, new Parameter
                 {
-                    Name = Generator.GeneratedIdentifier("op"),
+                    Name = "lhs",
                     QualifiedType = new QualifiedType(type),
                     Kind = ParameterKind.OperatorParameter,
                     Namespace = @operator
@@ -140,9 +154,62 @@ namespace CppSharp.Passes
                 };
 
                 method.Parameters.AddRange(op.Parameters.Select(
-                    p => new Parameter(p) { Namespace = method }));
+                    p => new Parameter(p)
+                    {
+                        Namespace = method
+                    }));
 
                 @class.Methods.Insert(index, method);
+            }
+        }
+        
+        private static void HandleSpaceshipOperatorOverload(Class @class)
+        {
+            foreach (var op in @class.Operators.Where(
+                         o => o.OperatorKind == CXXOperatorKind.Spaceship).ToList())
+            {
+                var lhsType = op.Parameters.First().Type;
+                var rhsType = op.Parameters.Last().Type;
+                var definedComparisonOps = @class.Operators.Where(o => o.IsGenerated &&
+                                                                o.Parameters.First().Type.Equals(lhsType) &&
+                                                                o.Parameters.Last().Type.Equals(rhsType) &&
+                                                                ComparisonOpKinds.Contains(o.OperatorKind));
+                
+                var missingOps = ComparisonOpKinds.Except(definedComparisonOps.Select(o => o.OperatorKind)).ToList();
+
+                
+                var insertIndex = @class.Methods.IndexOf(op);
+
+                foreach (var missingOp in missingOps)
+                {
+                    // TODO: match with existing operators to determine if we can use complement synth
+                    bool canBeComplement = missingOp is CXXOperatorKind.ExclaimEqual or CXXOperatorKind.GreaterEqual or CXXOperatorKind.LessEqual;
+
+                    var method = new Method
+                    {
+                        Name = Operators.GetOperatorIdentifier(missingOp),
+                        Namespace = @class,
+                        SynthKind = canBeComplement ? FunctionSynthKind.ComplementOperator : FunctionSynthKind.DefaultOperator,
+                        Kind = CXXMethodKind.Operator,
+                        OperatorKind = missingOp,
+                        IsDefaulted = op.IsDefaulted,
+                        ReturnType = new QualifiedType(new BuiltinType(PrimitiveType.Bool)),
+                    };
+
+                    method.Parameters.AddRange(op.Parameters.Select(
+                        p => new Parameter(p)
+                        {
+                            Name = "rhs",
+                            Namespace = method
+                        }));
+
+                    CreateOperator(@class, method);
+
+                    @class.Methods.Insert(insertIndex, method);
+                    insertIndex++;
+                }
+
+                @class.Methods.Remove(op);
             }
         }
 

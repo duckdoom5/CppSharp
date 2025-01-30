@@ -140,6 +140,7 @@ namespace CppSharp.AST
     {
         None,
         ComplementOperator,
+        DefaultOperator,
         AbstractImplCall,
         DefaultValueOverload,
         InterfaceInstance,

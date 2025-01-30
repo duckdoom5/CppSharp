@@ -369,6 +369,14 @@ namespace CppSharp.AST
             return true;
         }
 
+        public virtual bool VisitSYCLUniqueStableNameExpr(SYCLUniqueStableNameExpr stmt)
+        {
+            if (!VisitExpr(stmt))
+                return false;
+
+            return true;
+        }
+
         public virtual bool VisitParenExpr(ParenExpr stmt)
         {
             if (!VisitExpr(stmt))
@@ -402,6 +410,14 @@ namespace CppSharp.AST
         }
 
         public virtual bool VisitArraySubscriptExpr(ArraySubscriptExpr stmt)
+        {
+            if (!VisitExpr(stmt))
+                return false;
+
+            return true;
+        }
+
+        public virtual bool VisitMatrixSubscriptExpr(MatrixSubscriptExpr stmt)
         {
             if (!VisitExpr(stmt))
                 return false;
@@ -561,6 +577,14 @@ namespace CppSharp.AST
             return true;
         }
 
+        public virtual bool VisitSourceLocExpr(SourceLocExpr stmt)
+        {
+            if (!VisitExpr(stmt))
+                return false;
+
+            return true;
+        }
+
         public virtual bool VisitInitListExpr(InitListExpr stmt)
         {
             if (!VisitExpr(stmt))
@@ -681,6 +705,14 @@ namespace CppSharp.AST
             return true;
         }
 
+        public virtual bool VisitRecoveryExpr(RecoveryExpr stmt)
+        {
+            if (!VisitExpr(stmt))
+                return false;
+
+            return true;
+        }
+
         public virtual bool VisitCXXOperatorCallExpr(CXXOperatorCallExpr stmt)
         {
             if (!VisitCallExpr(stmt))
@@ -700,6 +732,14 @@ namespace CppSharp.AST
         public virtual bool VisitCUDAKernelCallExpr(CUDAKernelCallExpr stmt)
         {
             if (!VisitCallExpr(stmt))
+                return false;
+
+            return true;
+        }
+
+        public virtual bool VisitCXXRewrittenBinaryOperator(CXXRewrittenBinaryOperator stmt)
+        {
+            if (!VisitExpr(stmt))
                 return false;
 
             return true;
@@ -738,6 +778,14 @@ namespace CppSharp.AST
         }
 
         public virtual bool VisitCXXConstCastExpr(CXXConstCastExpr stmt)
+        {
+            if (!VisitCXXNamedCastExpr(stmt))
+                return false;
+
+            return true;
+        }
+
+        public virtual bool VisitCXXAddrspaceCastExpr(CXXAddrspaceCastExpr stmt)
         {
             if (!VisitCXXNamedCastExpr(stmt))
                 return false;
@@ -1065,6 +1113,14 @@ namespace CppSharp.AST
             return true;
         }
 
+        public virtual bool VisitCXXParenListInitExpr(CXXParenListInitExpr stmt)
+        {
+            if (!VisitExpr(stmt))
+                return false;
+
+            return true;
+        }
+
         public virtual bool VisitCoroutineSuspendExpr(CoroutineSuspendExpr stmt)
         {
             if (!VisitExpr(stmt))
@@ -1092,6 +1148,14 @@ namespace CppSharp.AST
         public virtual bool VisitCoyieldExpr(CoyieldExpr stmt)
         {
             if (!VisitCoroutineSuspendExpr(stmt))
+                return false;
+
+            return true;
+        }
+
+        public virtual bool VisitBuiltinBitCastExpr(BuiltinBitCastExpr stmt)
+        {
+            if (!VisitExplicitCastExpr(stmt))
                 return false;
 
             return true;
@@ -1146,11 +1210,13 @@ namespace CppSharp.AST
         T VisitImaginaryLiteral(ImaginaryLiteral stmt);
         T VisitStringLiteral(StringLiteral stmt);
         T VisitPredefinedExpr(PredefinedExpr stmt);
+        T VisitSYCLUniqueStableNameExpr(SYCLUniqueStableNameExpr stmt);
         T VisitParenExpr(ParenExpr stmt);
         T VisitUnaryOperator(UnaryOperator stmt);
         T VisitOffsetOfExpr(OffsetOfExpr stmt);
         T VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr stmt);
         T VisitArraySubscriptExpr(ArraySubscriptExpr stmt);
+        T VisitMatrixSubscriptExpr(MatrixSubscriptExpr stmt);
         T VisitCallExpr(CallExpr stmt);
         T VisitMemberExpr(MemberExpr stmt);
         T VisitCompoundLiteralExpr(CompoundLiteralExpr stmt);
@@ -1170,6 +1236,7 @@ namespace CppSharp.AST
         T VisitChooseExpr(ChooseExpr stmt);
         T VisitGNUNullExpr(GNUNullExpr stmt);
         T VisitVAArgExpr(VAArgExpr stmt);
+        T VisitSourceLocExpr(SourceLocExpr stmt);
         T VisitInitListExpr(InitListExpr stmt);
         T VisitDesignatedInitExpr(DesignatedInitExpr stmt);
         T VisitNoInitExpr(NoInitExpr stmt);
@@ -1185,14 +1252,17 @@ namespace CppSharp.AST
         T VisitPseudoObjectExpr(PseudoObjectExpr stmt);
         T VisitAtomicExpr(AtomicExpr stmt);
         T VisitTypoExpr(TypoExpr stmt);
+        T VisitRecoveryExpr(RecoveryExpr stmt);
         T VisitCXXOperatorCallExpr(CXXOperatorCallExpr stmt);
         T VisitCXXMemberCallExpr(CXXMemberCallExpr stmt);
         T VisitCUDAKernelCallExpr(CUDAKernelCallExpr stmt);
+        T VisitCXXRewrittenBinaryOperator(CXXRewrittenBinaryOperator stmt);
         T VisitCXXNamedCastExpr(CXXNamedCastExpr stmt);
         T VisitCXXStaticCastExpr(CXXStaticCastExpr stmt);
         T VisitCXXDynamicCastExpr(CXXDynamicCastExpr stmt);
         T VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr stmt);
         T VisitCXXConstCastExpr(CXXConstCastExpr stmt);
+        T VisitCXXAddrspaceCastExpr(CXXAddrspaceCastExpr stmt);
         T VisitUserDefinedLiteral(UserDefinedLiteral stmt);
         T VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr stmt);
         T VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr stmt);
@@ -1233,9 +1303,11 @@ namespace CppSharp.AST
         T VisitFunctionParmPackExpr(FunctionParmPackExpr stmt);
         T VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr stmt);
         T VisitCXXFoldExpr(CXXFoldExpr stmt);
+        T VisitCXXParenListInitExpr(CXXParenListInitExpr stmt);
         T VisitCoroutineSuspendExpr(CoroutineSuspendExpr stmt);
         T VisitCoawaitExpr(CoawaitExpr stmt);
         T VisitDependentCoawaitExpr(DependentCoawaitExpr stmt);
         T VisitCoyieldExpr(CoyieldExpr stmt);
+        T VisitBuiltinBitCastExpr(BuiltinBitCastExpr stmt);
     }
 }

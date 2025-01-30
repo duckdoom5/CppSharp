@@ -319,9 +319,19 @@ namespace CppSharp
                     var _stmt = CXXNullPtrLiteralExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
+                case StmtClass.CXXParenListInitExpr:
+                {
+                    var _stmt = CXXParenListInitExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
                 case StmtClass.CXXPseudoDestructorExpr:
                 {
                     var _stmt = CXXPseudoDestructorExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
+                case StmtClass.CXXRewrittenBinaryOperator:
+                {
+                    var _stmt = CXXRewrittenBinaryOperator.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
                 case StmtClass.CXXScalarValueInitExpr:
@@ -384,6 +394,11 @@ namespace CppSharp
                     var _stmt = UserDefinedLiteral.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
+                case StmtClass.BuiltinBitCastExpr:
+                {
+                    var _stmt = BuiltinBitCastExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
                 case StmtClass.CStyleCastExpr:
                 {
                     var _stmt = CStyleCastExpr.__CreateInstance(stmt.__Instance);
@@ -392,6 +407,11 @@ namespace CppSharp
                 case StmtClass.CXXFunctionalCastExpr:
                 {
                     var _stmt = CXXFunctionalCastExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
+                case StmtClass.CXXAddrspaceCastExpr:
+                {
+                    var _stmt = CXXAddrspaceCastExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
                 case StmtClass.CXXConstCastExpr:
@@ -432,6 +452,11 @@ namespace CppSharp
                 case StmtClass.CompoundLiteralExpr:
                 {
                     var _stmt = CompoundLiteralExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
+                case StmtClass.ConceptSpecializationExpr:
+                {
+                    var _stmt = ConceptSpecializationExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
                 case StmtClass.ConvertVectorExpr:
@@ -559,6 +584,11 @@ namespace CppSharp
                     var _stmt = MaterializeTemporaryExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
+                case StmtClass.MatrixSubscriptExpr:
+                {
+                    var _stmt = MatrixSubscriptExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
                 case StmtClass.MemberExpr:
                 {
                     var _stmt = MemberExpr.__CreateInstance(stmt.__Instance);
@@ -614,6 +644,21 @@ namespace CppSharp
                     var _stmt = PseudoObjectExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
+                case StmtClass.RecoveryExpr:
+                {
+                    var _stmt = RecoveryExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
+                case StmtClass.RequiresExpr:
+                {
+                    var _stmt = RequiresExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
+                case StmtClass.SYCLUniqueStableNameExpr:
+                {
+                    var _stmt = SYCLUniqueStableNameExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
                 case StmtClass.ShuffleVectorExpr:
                 {
                     var _stmt = ShuffleVectorExpr.__CreateInstance(stmt.__Instance);
@@ -622,6 +667,11 @@ namespace CppSharp
                 case StmtClass.SizeOfPackExpr:
                 {
                     var _stmt = SizeOfPackExpr.__CreateInstance(stmt.__Instance);
+                    return VisitExpression(_stmt as Expr) as TRet;
+                }
+                case StmtClass.SourceLocExpr:
+                {
+                    var _stmt = SourceLocExpr.__CreateInstance(stmt.__Instance);
                     return VisitExpression(_stmt as Expr) as TRet;
                 }
                 case StmtClass.StmtExpr:
@@ -694,7 +744,6 @@ namespace CppSharp
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.IsSingleDecl = stmt.IsSingleDecl;
-            _stmt.SingleDecl = VisitDeclaration(stmt.SingleDecl) as AST.Declaration;
             for (uint i = 0; i < stmt.GetdeclsCount; i++)
             {
                 var _E = stmt.Getdecls(i);
@@ -722,8 +771,7 @@ namespace CppSharp
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.BodyEmpty = stmt.BodyEmpty;
             _stmt.Size = stmt.Size;
-            _stmt.BodyFront = VisitStatement(stmt.BodyFront) as AST.Stmt;
-            _stmt.BodyBack = VisitStatement(stmt.BodyBack) as AST.Stmt;
+            _stmt.HasStoredFPFeatures = stmt.HasStoredFPFeatures;
             _stmt.LBracLoc = VisitSourceLocation(stmt.LBracLoc);
             _stmt.RBracLoc = VisitSourceLocation(stmt.RBracLoc);
             for (uint i = 0; i < stmt.GetbodyCount; i++)
@@ -782,6 +830,7 @@ namespace CppSharp
             _stmt.IdentLoc = VisitSourceLocation(stmt.IdentLoc);
             _stmt.Name = stmt.Name;
             _stmt.SubStmt = VisitStatement(stmt.SubStmt) as AST.Stmt;
+            _stmt.SideEntry = stmt.SideEntry;
             return _stmt;
         }
 
@@ -792,7 +841,6 @@ namespace CppSharp
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.AttrLoc = VisitSourceLocation(stmt.AttrLoc);
-            _stmt.SubStmt = VisitStatement(stmt.SubStmt) as AST.Stmt;
             return _stmt;
         }
 
@@ -812,7 +860,11 @@ namespace CppSharp
             _stmt.Init = VisitStatement(stmt.Init) as AST.Stmt;
             _stmt.IfLoc = VisitSourceLocation(stmt.IfLoc);
             _stmt.ElseLoc = VisitSourceLocation(stmt.ElseLoc);
-            _stmt.Constexpr = stmt.Constexpr;
+            _stmt.IsConsteval = stmt.IsConsteval;
+            _stmt.IsNonNegatedConsteval = stmt.IsNonNegatedConsteval;
+            _stmt.IsNegatedConsteval = stmt.IsNegatedConsteval;
+            _stmt.IsConstexpr = stmt.IsConstexpr;
+            _stmt.StatementKind = (AST.IfStatementKind) stmt.StatementKind;
             _stmt.IsObjCAvailabilityCheck = stmt.IsObjCAvailabilityCheck;
             _stmt.LParenLoc = VisitSourceLocation(stmt.LParenLoc);
             _stmt.RParenLoc = VisitSourceLocation(stmt.RParenLoc);
@@ -955,14 +1007,21 @@ namespace CppSharp
             for (uint i = 0; i < stmt.GetinputsCount; i++)
             {
                 var _E = stmt.Getinputs(i);
-                _stmt.Inputs.Add(VisitExpression(_E) as AST.Expr);
+                _stmt.Inputs.Add(VisitStatement(_E) as AST.Stmt.CastIterator);
             }
             for (uint i = 0; i < stmt.GetoutputsCount; i++)
             {
                 var _E = stmt.Getoutputs(i);
-                _stmt.Outputs.Add(VisitExpression(_E) as AST.Expr);
+                _stmt.Outputs.Add(VisitStatement(_E) as AST.Stmt.CastIterator);
             }
             _stmt.RParenLoc = VisitSourceLocation(stmt.RParenLoc);
+            _stmt.IsAsmGoto = stmt.IsAsmGoto;
+            _stmt.NumLabels = stmt.NumLabels;
+            for (uint i = 0; i < stmt.GetlabelsCount; i++)
+            {
+                var _E = stmt.Getlabels(i);
+                _stmt.Labels.Add(VisitStatement(_E) as AST.Stmt.CastIterator);
+            }
             return _stmt;
         }
 
@@ -982,12 +1041,12 @@ namespace CppSharp
             for (uint i = 0; i < stmt.GetinputsCount; i++)
             {
                 var _E = stmt.Getinputs(i);
-                _stmt.Inputs.Add(VisitExpression(_E) as AST.Expr);
+                _stmt.Inputs.Add(VisitStatement(_E) as AST.Stmt.CastIterator);
             }
             for (uint i = 0; i < stmt.GetoutputsCount; i++)
             {
                 var _E = stmt.Getoutputs(i);
-                _stmt.Outputs.Add(VisitExpression(_E) as AST.Expr);
+                _stmt.Outputs.Add(VisitStatement(_E) as AST.Stmt.CastIterator);
             }
             _stmt.LBraceLoc = VisitSourceLocation(stmt.LBraceLoc);
             _stmt.HasBraces = stmt.HasBraces;
@@ -1050,7 +1109,6 @@ namespace CppSharp
             _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
-            _stmt.capturedStmt = VisitStatement(stmt.capturedStmt) as AST.Stmt;
             _stmt.CaptureSize = stmt.CaptureSize;
             _stmt.SourceRange = VisitSourceRange(stmt.SourceRange);
             for (uint i = 0; i < stmt.GetcaptureInitsCount; i++)
@@ -1080,7 +1138,6 @@ namespace CppSharp
             _stmt.BeginLoc = VisitSourceLocation(stmt.BeginLoc);
             _stmt.EndLoc = VisitSourceLocation(stmt.EndLoc);
             _stmt.TryLoc = VisitSourceLocation(stmt.TryLoc);
-            _stmt.TryBlock = VisitStatement(stmt.TryBlock) as AST.CompoundStmt;
             _stmt.NumHandlers = stmt.NumHandlers;
             return _stmt;
         }
@@ -1096,10 +1153,6 @@ namespace CppSharp
             _stmt.Cond = VisitExpression(stmt.Cond) as AST.Expr;
             _stmt.Inc = VisitExpression(stmt.Inc) as AST.Expr;
             _stmt.Body = VisitStatement(stmt.Body) as AST.Stmt;
-            _stmt.RangeStmt = VisitStatement(stmt.RangeStmt) as AST.DeclStmt;
-            _stmt.BeginStmt = VisitStatement(stmt.BeginStmt) as AST.DeclStmt;
-            _stmt.EndStmt = VisitStatement(stmt.EndStmt) as AST.DeclStmt;
-            _stmt.LoopVarStmt = VisitStatement(stmt.LoopVarStmt) as AST.DeclStmt;
             _stmt.ForLoc = VisitSourceLocation(stmt.ForLoc);
             _stmt.CoawaitLoc = VisitSourceLocation(stmt.CoawaitLoc);
             _stmt.ColonLoc = VisitSourceLocation(stmt.ColonLoc);
@@ -1140,6 +1193,11 @@ namespace CppSharp
             _stmt.ReturnValue = VisitExpression(stmt.ReturnValue) as AST.Expr;
             _stmt.ReturnStmt = VisitStatement(stmt.ReturnStmt) as AST.Stmt;
             _stmt.ReturnStmtOnAllocFailure = VisitStatement(stmt.ReturnStmtOnAllocFailure) as AST.Stmt;
+            for (uint i = 0; i < stmt.GetchildrenExclBodyCount; i++)
+            {
+                var _E = stmt.GetchildrenExclBody(i);
+                _stmt.ChildrenExclBody.Add(VisitStatement(_E) as AST.StmtIterator);
+            }
             return _stmt;
         }
 

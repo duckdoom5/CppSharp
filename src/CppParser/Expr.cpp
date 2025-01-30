@@ -17,38 +17,42 @@ Expr::Classification::Classification()
 
 Expr::Expr()
     : ValueStmt(StmtClass::NoStmt)
+    , dependence((ExprDependenceScope::ExprDependence::UnexpandedPack))
     , type(QualifiedType())
-    , valueDependent(0)
-    , typeDependent(0)
-    , instantiationDependent(0)
-    , containsUnexpandedParameterPack(0)
+    , isValueDependent(false)
+    , isTypeDependent(false)
+    , isInstantiationDependent(false)
+    , containsUnexpandedParameterPack(false)
+    , containsErrors(false)
     , exprLoc(SourceLocation())
-    , sourceBitField(nullptr)
-    , referencedDeclOfCallee(nullptr)
+    , isReadIfDiscardedInCPlusPlus11(false)
     , isLValue(false)
     , isPRValue(false)
     , isXValue(false)
     , isGLValue(false)
     , isOrdinaryOrBitFieldObject(false)
+    , refersToMatrixElement(false)
     , hasPlaceholderType(false)
 {
 }
 
 Expr::Expr(StmtClass klass)
     : ValueStmt(klass)
+    , dependence((ExprDependenceScope::ExprDependence::UnexpandedPack))
     , type(QualifiedType())
-    , valueDependent(0)
-    , typeDependent(0)
-    , instantiationDependent(0)
-    , containsUnexpandedParameterPack(0)
+    , isValueDependent(false)
+    , isTypeDependent(false)
+    , isInstantiationDependent(false)
+    , containsUnexpandedParameterPack(false)
+    , containsErrors(false)
     , exprLoc(SourceLocation())
-    , isOrdinaryOrBitFieldObject(0)
-    , sourceBitField(nullptr)
-    , referencedDeclOfCallee(nullptr)
+    , isReadIfDiscardedInCPlusPlus11(false)
     , isLValue(false)
     , isPRValue(false)
     , isXValue(false)
     , isGLValue(false)
+    , isOrdinaryOrBitFieldObject(false)
+    , refersToMatrixElement(false)
     , hasPlaceholderType(false)
 {
 }
@@ -67,12 +71,20 @@ FullExpr::FullExpr(StmtClass klass)
 
 ConstantExpr::ConstantExpr()
     : FullExpr(StmtClass::ConstantExpr)
+    , resultAPValueKind((APValue::ValueKind::None))
+    , resultStorageKind((ConstantExpr::ResultStorageKind::None))
+    , isImmediateInvocation(false)
+    , hasAPValueResult(false)
+    , aPValueResult(APValue())
+    , resultAsAPValue(0)
+    , resultAsAPSInt(APSInt())
 {
 }
 
 OpaqueValueExpr::OpaqueValueExpr()
     : Expr(StmtClass::OpaqueValueExpr)
     , location(SourceLocation())
+    , exprLoc(SourceLocation())
     , sourceExpr(nullptr)
     , isUnique(false)
 {
@@ -81,8 +93,6 @@ OpaqueValueExpr::OpaqueValueExpr()
 DeclRefExpr::DeclRefExpr()
     : Expr(StmtClass::DeclRefExpr)
     , location(SourceLocation())
-    , hadMultipleCandidates(0)
-    , foundDecl(nullptr)
     , hasQualifier(false)
     , hasTemplateKWAndArgsInfo(false)
     , templateKeywordLoc(SourceLocation())
@@ -91,7 +101,10 @@ DeclRefExpr::DeclRefExpr()
     , hasTemplateKeyword(false)
     , hasExplicitTemplateArgs(false)
     , numTemplateArgs(0)
+    , hadMultipleCandidates(false)
+    , isNonOdrUse((NonOdrUseReason::None))
     , refersToEnclosingVariableOrCapture(false)
+    , isImmediateEscalating(false)
 {
 }
 
@@ -105,6 +118,7 @@ IntegerLiteral::IntegerLiteral()
 FixedPointLiteral::FixedPointLiteral()
     : Expr(StmtClass::FixedPointLiteral)
     , location(SourceLocation())
+    , scale(0)
     , value(0)
 {
 }
@@ -119,9 +133,10 @@ CharacterLiteral::CharacterLiteral()
 
 FloatingLiteral::FloatingLiteral()
     : Expr(StmtClass::FloatingLiteral)
-    , exact(0)
-    , location(SourceLocation())
+    , rawSemantics((llvm::APFloatBase::Semantics::IEEEhalf))
+    , exact(false)
     , valueAsApproximateDouble(0)
+    , location(SourceLocation())
 {
 }
 
@@ -136,23 +151,33 @@ StringLiteral::StringLiteral()
     , byteLength(0)
     , length(0)
     , charByteWidth(0)
-    , kind((StringLiteral::StringKind::Ascii))
-    , isAscii(0)
-    , isWide(0)
-    , isUTF8(0)
-    , isUTF16(0)
-    , isUTF32(0)
-    , isPascal(0)
-    , containsNonAscii(0)
-    , containsNonAsciiOrNull(0)
+    , kind((StringLiteral::StringKind::Ordinary))
+    , isOrdinary(false)
+    , isWide(false)
+    , isUTF8(false)
+    , isUTF16(false)
+    , isUTF32(false)
+    , isUnevaluated(false)
+    , isPascal(false)
+    , containsNonAscii(false)
+    , containsNonAsciiOrNull(false)
     , numConcatenated(0)
 {
 }
 
 PredefinedExpr::PredefinedExpr()
     : Expr(StmtClass::PredefinedExpr)
-    , location(SourceLocation())
     , identKind((PredefinedExpr::IdentKind::Func))
+    , isTransparent(false)
+    , location(SourceLocation())
+{
+}
+
+SYCLUniqueStableNameExpr::SYCLUniqueStableNameExpr()
+    : Expr(StmtClass::SYCLUniqueStableNameExpr)
+    , location(SourceLocation())
+    , lParenLocation(SourceLocation())
+    , rParenLocation(SourceLocation())
 {
 }
 
@@ -169,14 +194,15 @@ UnaryOperator::UnaryOperator()
     , opcode((UnaryOperatorKind::PostInc))
     , subExpr(nullptr)
     , operatorLoc(SourceLocation())
-    , canOverflow(0)
-    , isPrefix(0)
-    , isPostfix(0)
-    , isIncrementOp(0)
-    , isDecrementOp(0)
-    , isIncrementDecrementOp(0)
-    , isArithmeticOp(0)
-    , isFPContractableWithinStatement(0)
+    , canOverflow(false)
+    , isPrefix(false)
+    , isPostfix(false)
+    , isIncrementOp(false)
+    , isDecrementOp(false)
+    , isIncrementDecrementOp(false)
+    , isArithmeticOp(false)
+    , exprLoc(SourceLocation())
+    , hasStoredFPFeatures(false)
 {
 }
 
@@ -192,12 +218,11 @@ OffsetOfExpr::OffsetOfExpr()
 UnaryExprOrTypeTraitExpr::UnaryExprOrTypeTraitExpr()
     : Expr(StmtClass::UnaryExprOrTypeTraitExpr)
     , kind((UnaryExprOrTypeTrait::SizeOf))
+    , isArgumentType(false)
+    , argumentType(QualifiedType())
+    , typeOfArgument(QualifiedType())
     , operatorLoc(SourceLocation())
     , rParenLoc(SourceLocation())
-    , isArgumentType(0)
-    , argumentType(QualifiedType())
-    , argumentExpr(nullptr)
-    , typeOfArgument(QualifiedType())
 {
 }
 
@@ -206,61 +231,73 @@ ArraySubscriptExpr::ArraySubscriptExpr()
     , lHS(nullptr)
     , rHS(nullptr)
     , rBracketLoc(SourceLocation())
+    , exprLoc(SourceLocation())
+{
+}
+
+MatrixSubscriptExpr::MatrixSubscriptExpr()
+    : Expr(StmtClass::MatrixSubscriptExpr)
+    , isIncomplete(false)
     , base(nullptr)
-    , idx(nullptr)
+    , rowIdx(nullptr)
+    , columnIdx(nullptr)
+    , exprLoc(SourceLocation())
+    , rBracketLoc(SourceLocation())
 {
 }
 
 CallExpr::CallExpr()
     : Expr(StmtClass::CallExpr)
     , callee(nullptr)
-    , rParenLoc(SourceLocation())
-    , calleeDecl(nullptr)
-    , directCallee(nullptr)
+    , aDLCallKind((CallExpr::ADLCallKind::NotADL))
+    , usesADL(false)
+    , hasStoredFPFeatures(false)
     , numArgs(0)
-    , numCommas(0)
     , builtinCallee(0)
-    , isCallToStdMove(0)
+    , rParenLoc(SourceLocation())
+    , isCallToStdMove(false)
 {
 }
 
 CallExpr::CallExpr(StmtClass klass)
     : Expr(klass)
     , callee(nullptr)
-    , rParenLoc(SourceLocation())
-    , calleeDecl(nullptr)
-    , directCallee(nullptr)
+    , aDLCallKind((CallExpr::ADLCallKind::NotADL))
+    , usesADL(false)
+    , hasStoredFPFeatures(false)
     , numArgs(0)
-    , numCommas(0)
     , builtinCallee(0)
-    , isCallToStdMove(0)
+    , rParenLoc(SourceLocation())
+    , isCallToStdMove(false)
 {
 }
 
-DEF_VECTOR(CallExpr, Expr*, arguments)
+DEF_VECTOR(CallExpr, Stmt::CastIterator<clang::Expr, clang::Expr*, clang::Stmt*>*, arguments)
 
 MemberExpr::MemberExpr()
     : Expr(StmtClass::MemberExpr)
     , base(nullptr)
-    , arrow(0)
-    , memberLoc(SourceLocation())
-    , hadMultipleCandidates(0)
-    , hasQualifier(0)
+    , hasQualifier(false)
     , templateKeywordLoc(SourceLocation())
     , lAngleLoc(SourceLocation())
     , rAngleLoc(SourceLocation())
-    , hasTemplateKeyword(0)
-    , hasExplicitTemplateArgs(0)
+    , hasTemplateKeyword(false)
+    , hasExplicitTemplateArgs(false)
     , numTemplateArgs(0)
     , operatorLoc(SourceLocation())
-    , isImplicitAccess(0)
+    , arrow(false)
+    , memberLoc(SourceLocation())
+    , exprLoc(SourceLocation())
+    , isImplicitAccess(false)
+    , hadMultipleCandidates(false)
+    , isNonOdrUse((NonOdrUseReason::None))
 {
 }
 
 CompoundLiteralExpr::CompoundLiteralExpr()
     : Expr(StmtClass::CompoundLiteralExpr)
     , initializer(nullptr)
-    , fileScope(0)
+    , fileScope(false)
     , lParenLoc(SourceLocation())
 {
 }
@@ -268,30 +305,30 @@ CompoundLiteralExpr::CompoundLiteralExpr()
 CastExpr::CastExpr()
     : Expr(StmtClass::NoStmt)
     , castKind((CastKind::Dependent))
-    , subExpr(nullptr)
     , castKindName(nullptr)
-    , subExprAsWritten(nullptr)
+    , subExpr(nullptr)
     , conversionFunction(nullptr)
-    , path_empty(0)
+    , path_empty(false)
     , path_size(0)
+    , hasStoredFPFeatures(false)
 {
 }
 
 CastExpr::CastExpr(StmtClass klass)
     : Expr(klass)
     , castKind((CastKind::Dependent))
-    , subExpr(nullptr)
     , castKindName(nullptr)
-    , subExprAsWritten(nullptr)
+    , subExpr(nullptr)
     , conversionFunction(nullptr)
-    , path_empty(0)
+    , path_empty(false)
     , path_size(0)
+    , hasStoredFPFeatures(false)
 {
 }
 
 ImplicitCastExpr::ImplicitCastExpr()
     : CastExpr(StmtClass::ImplicitCastExpr)
-    , isPartOfExplicitCast(0)
+    , isPartOfExplicitCast(false)
 {
 }
 
@@ -316,47 +353,49 @@ CStyleCastExpr::CStyleCastExpr()
 
 BinaryOperator::BinaryOperator()
     : Expr(StmtClass::BinaryOperator)
+    , exprLoc(SourceLocation())
     , operatorLoc(SourceLocation())
     , opcode((BinaryOperatorKind::PtrMemD))
     , lHS(nullptr)
     , rHS(nullptr)
-    , isPtrMemOp(0)
-    , isMultiplicativeOp(0)
-    , isAdditiveOp(0)
-    , isShiftOp(0)
-    , isBitwiseOp(0)
-    , isRelationalOp(0)
-    , isEqualityOp(0)
-    , isComparisonOp(0)
-    , isLogicalOp(0)
-    , isAssignmentOp(0)
-    , isCompoundAssignmentOp(0)
-    , isShiftAssignOp(0)
-    , isFPContractableWithinStatement(0)
-    , isFEnvAccessOn(0)
+    , isPtrMemOp(false)
+    , isMultiplicativeOp(false)
+    , isAdditiveOp(false)
+    , isShiftOp(false)
+    , isBitwiseOp(false)
+    , isRelationalOp(false)
+    , isEqualityOp(false)
+    , isComparisonOp(false)
+    , isCommaOp(false)
+    , isLogicalOp(false)
+    , isAssignmentOp(false)
+    , isCompoundAssignmentOp(false)
+    , isShiftAssignOp(false)
+    , hasStoredFPFeatures(false)
 {
 }
 
 BinaryOperator::BinaryOperator(StmtClass klass)
     : Expr(klass)
+    , exprLoc(SourceLocation())
     , operatorLoc(SourceLocation())
     , opcode((BinaryOperatorKind::PtrMemD))
     , lHS(nullptr)
     , rHS(nullptr)
-    , isPtrMemOp(0)
-    , isMultiplicativeOp(0)
-    , isAdditiveOp(0)
-    , isShiftOp(0)
-    , isBitwiseOp(0)
-    , isRelationalOp(0)
-    , isEqualityOp(0)
-    , isComparisonOp(0)
-    , isLogicalOp(0)
-    , isAssignmentOp(0)
-    , isCompoundAssignmentOp(0)
-    , isShiftAssignOp(0)
-    , isFPContractableWithinStatement(0)
-    , isFEnvAccessOn(0)
+    , isPtrMemOp(false)
+    , isMultiplicativeOp(false)
+    , isAdditiveOp(false)
+    , isShiftOp(false)
+    , isBitwiseOp(false)
+    , isRelationalOp(false)
+    , isEqualityOp(false)
+    , isComparisonOp(false)
+    , isCommaOp(false)
+    , isLogicalOp(false)
+    , isAssignmentOp(false)
+    , isCompoundAssignmentOp(false)
+    , isShiftAssignOp(false)
+    , hasStoredFPFeatures(false)
 {
 }
 
@@ -389,6 +428,9 @@ AbstractConditionalOperator::AbstractConditionalOperator(StmtClass klass)
 
 ConditionalOperator::ConditionalOperator()
     : AbstractConditionalOperator(StmtClass::ConditionalOperator)
+    , cond(nullptr)
+    , trueExpr(nullptr)
+    , falseExpr(nullptr)
     , lHS(nullptr)
     , rHS(nullptr)
 {
@@ -398,6 +440,9 @@ BinaryConditionalOperator::BinaryConditionalOperator()
     : AbstractConditionalOperator(StmtClass::BinaryConditionalOperator)
     , common(nullptr)
     , opaqueValue(nullptr)
+    , cond(nullptr)
+    , trueExpr(nullptr)
+    , falseExpr(nullptr)
 {
 }
 
@@ -413,6 +458,7 @@ StmtExpr::StmtExpr()
     , subStmt(nullptr)
     , lParenLoc(SourceLocation())
     , rParenLoc(SourceLocation())
+    , templateDepth(0)
 {
 }
 
@@ -434,14 +480,14 @@ ConvertVectorExpr::ConvertVectorExpr()
 
 ChooseExpr::ChooseExpr()
     : Expr(StmtClass::ChooseExpr)
-    , isConditionTrue(0)
+    , isConditionTrue(false)
+    , isConditionDependent(false)
+    , chosenSubExpr(nullptr)
     , cond(nullptr)
     , lHS(nullptr)
     , rHS(nullptr)
     , builtinLoc(SourceLocation())
     , rParenLoc(SourceLocation())
-    , isConditionDependent(0)
-    , chosenSubExpr(nullptr)
 {
 }
 
@@ -454,26 +500,43 @@ GNUNullExpr::GNUNullExpr()
 VAArgExpr::VAArgExpr()
     : Expr(StmtClass::VAArgExpr)
     , subExpr(nullptr)
-    , isMicrosoftABI(0)
+    , isMicrosoftABI(false)
     , builtinLoc(SourceLocation())
     , rParenLoc(SourceLocation())
 {
 }
 
+SourceLocExpr::SourceLocExpr()
+    : Expr(StmtClass::SourceLocExpr)
+    , identKind((SourceLocExpr::IdentKind::Function))
+    , isIntType(false)
+    , location(SourceLocation())
+{
+}
+
 InitListExpr::InitListExpr()
     : Expr(StmtClass::InitListExpr)
+    , numInits(0)
     , arrayFiller(nullptr)
+    , hasArrayFiller(false)
+    , hasDesignatedInit(false)
+    , isExplicit(false)
+    , isStringLiteralInit(false)
+    , isTransparent(false)
     , lBraceLoc(SourceLocation())
     , rBraceLoc(SourceLocation())
-    , syntacticForm(nullptr)
-    , numInits(0)
-    , hasArrayFiller(0)
-    , isExplicit(0)
-    , isStringLiteralInit(0)
-    , isTransparent(0)
-    , isSemanticForm(0)
+    , isSemanticForm(false)
     , semanticForm(nullptr)
-    , isSyntacticForm(0)
+    , isSyntacticForm(false)
+    , syntacticForm(nullptr)
+{
+}
+
+DesignatedInitExpr::Designator::FieldDesignatorInfo::FieldDesignatorInfo()
+{
+}
+
+DesignatedInitExpr::Designator::ArrayOrRangeDesignatorInfo::ArrayOrRangeDesignatorInfo()
 {
 }
 
@@ -481,20 +544,13 @@ DesignatedInitExpr::Designator::Designator()
 {
 }
 
-DesignatedInitExpr::FieldDesignator::FieldDesignator()
-{
-}
-
-DesignatedInitExpr::ArrayOrRangeDesignator::ArrayOrRangeDesignator()
-{
-}
-
 DesignatedInitExpr::DesignatedInitExpr()
     : Expr(StmtClass::DesignatedInitExpr)
-    , equalOrColonLoc(SourceLocation())
-    , init(nullptr)
     , size(0)
-    , usesGNUSyntax(0)
+    , equalOrColonLoc(SourceLocation())
+    , isDirectInit(false)
+    , usesGNUSyntax(false)
+    , init(nullptr)
     , numSubExprs(0)
     , designatorsSourceRange(SourceRange())
 {
@@ -540,30 +596,31 @@ ParenListExpr::ParenListExpr()
 GenericSelectionExpr::GenericSelectionExpr()
     : Expr(StmtClass::GenericSelectionExpr)
     , numAssocs(0)
+    , resultIndex(0)
+    , isResultDependent(false)
+    , isExprPredicate(false)
+    , isTypePredicate(false)
     , genericLoc(SourceLocation())
     , defaultLoc(SourceLocation())
     , rParenLoc(SourceLocation())
-    , controllingExpr(nullptr)
-    , isResultDependent(0)
-    , resultIndex(0)
-    , resultExpr(nullptr)
 {
 }
+
+DEF_VECTOR(GenericSelectionExpr, GenericSelectionExpr::AssociationIteratorTy<0>*, associations)
 
 ExtVectorElementExpr::ExtVectorElementExpr()
     : Expr(StmtClass::ExtVectorElementExpr)
     , base(nullptr)
     , accessorLoc(SourceLocation())
     , numElements(0)
-    , containsDuplicateElements(0)
-    , isArrow(0)
+    , containsDuplicateElements(false)
+    , isArrow(false)
 {
 }
 
 BlockExpr::BlockExpr()
     : Expr(StmtClass::BlockExpr)
     , caretLocation(SourceLocation())
-    , body(nullptr)
 {
 }
 
@@ -577,10 +634,9 @@ AsTypeExpr::AsTypeExpr()
 
 PseudoObjectExpr::PseudoObjectExpr()
     : Expr(StmtClass::PseudoObjectExpr)
-    , syntacticForm(nullptr)
     , resultExprIndex(0)
-    , resultExpr(nullptr)
     , numSemanticExprs(0)
+    , exprLoc(SourceLocation())
 {
 }
 
@@ -596,9 +652,9 @@ AtomicExpr::AtomicExpr()
     , valueType(QualifiedType())
     , op((AtomicExpr::AtomicOp::C11AtomicInit))
     , numSubExprs(0)
-    , isVolatile(0)
-    , isCmpXChg(0)
-    , isOpenCL(0)
+    , isVolatile(false)
+    , isCmpXChg(false)
+    , isOpenCL(false)
     , builtinLoc(SourceLocation())
     , rParenLoc(SourceLocation())
 {
@@ -609,25 +665,54 @@ TypoExpr::TypoExpr()
 {
 }
 
+RecoveryExpr::RecoveryExpr()
+    : Expr(StmtClass::RecoveryExpr)
+{
+}
+
 CXXOperatorCallExpr::CXXOperatorCallExpr()
     : CallExpr(StmtClass::CXXOperatorCallExpr)
     , _operator((OverloadedOperatorKind::None))
-    , isAssignmentOp(0)
-    , isInfixBinaryOp(0)
+    , isAssignmentOp(false)
+    , isComparisonOp(false)
+    , isInfixBinaryOp(false)
     , operatorLoc(SourceLocation())
+    , exprLoc(SourceLocation())
+    , sourceRange(SourceRange())
 {
 }
 
 CXXMemberCallExpr::CXXMemberCallExpr()
     : CallExpr(StmtClass::CXXMemberCallExpr)
     , implicitObjectArgument(nullptr)
+    , objectType(QualifiedType())
     , methodDecl(nullptr)
+    , exprLoc(SourceLocation())
 {
 }
 
 CUDAKernelCallExpr::CUDAKernelCallExpr()
     : CallExpr(StmtClass::CUDAKernelCallExpr)
-    , config(nullptr)
+{
+}
+
+CXXRewrittenBinaryOperator::DecomposedForm::DecomposedForm()
+{
+}
+
+CXXRewrittenBinaryOperator::CXXRewrittenBinaryOperator()
+    : Expr(StmtClass::CXXRewrittenBinaryOperator)
+    , decomposedForm(DecomposedForm())
+    , isReversed(false)
+    , _operator((BinaryOperatorKind::PtrMemD))
+    , opcode((BinaryOperatorKind::PtrMemD))
+    , isComparisonOp(false)
+    , isAssignmentOp(false)
+    , lHS(nullptr)
+    , rHS(nullptr)
+    , operatorLoc(SourceLocation())
+    , exprLoc(SourceLocation())
+    , sourceRange(SourceRange())
 {
 }
 
@@ -656,7 +741,7 @@ CXXStaticCastExpr::CXXStaticCastExpr()
 
 CXXDynamicCastExpr::CXXDynamicCastExpr()
     : CXXNamedCastExpr(StmtClass::CXXDynamicCastExpr)
-    , isAlwaysNull(0)
+    , isAlwaysNull(false)
 {
 }
 
@@ -670,17 +755,21 @@ CXXConstCastExpr::CXXConstCastExpr()
 {
 }
 
+CXXAddrspaceCastExpr::CXXAddrspaceCastExpr()
+    : CXXNamedCastExpr(StmtClass::CXXAddrspaceCastExpr)
+{
+}
+
 UserDefinedLiteral::UserDefinedLiteral()
     : CallExpr(StmtClass::UserDefinedLiteral)
     , literalOperatorKind((UserDefinedLiteral::LiteralOperatorKind::Raw))
-    , cookedLiteral(nullptr)
     , uDSuffixLoc(SourceLocation())
 {
 }
 
 CXXBoolLiteralExpr::CXXBoolLiteralExpr()
     : Expr(StmtClass::CXXBoolLiteralExpr)
-    , value(0)
+    , value(false)
     , location(SourceLocation())
 {
 }
@@ -693,23 +782,25 @@ CXXNullPtrLiteralExpr::CXXNullPtrLiteralExpr()
 
 CXXStdInitializerListExpr::CXXStdInitializerListExpr()
     : Expr(StmtClass::CXXStdInitializerListExpr)
-    , subExpr(nullptr)
+    , sourceRange(SourceRange())
 {
 }
 
 CXXTypeidExpr::CXXTypeidExpr()
     : Expr(StmtClass::CXXTypeidExpr)
+    , isPotentiallyEvaluated(false)
+    , isTypeOperand(false)
     , exprOperand(nullptr)
-    , isPotentiallyEvaluated(0)
-    , isTypeOperand(0)
+    , sourceRange(SourceRange())
 {
 }
 
 MSPropertyRefExpr::MSPropertyRefExpr()
     : Expr(StmtClass::MSPropertyRefExpr)
-    , isImplicitAccess(0)
+    , sourceRange(SourceRange())
+    , isImplicitAccess(false)
     , baseExpr(nullptr)
-    , isArrow(0)
+    , isArrow(false)
     , memberLoc(SourceLocation())
 {
 }
@@ -717,44 +808,45 @@ MSPropertyRefExpr::MSPropertyRefExpr()
 MSPropertySubscriptExpr::MSPropertySubscriptExpr()
     : Expr(StmtClass::MSPropertySubscriptExpr)
     , rBracketLoc(SourceLocation())
-    , base(nullptr)
-    , idx(nullptr)
+    , exprLoc(SourceLocation())
 {
 }
 
 CXXUuidofExpr::CXXUuidofExpr()
     : Expr(StmtClass::CXXUuidofExpr)
+    , isTypeOperand(false)
     , exprOperand(nullptr)
-    , isTypeOperand(0)
+    , guidDecl(nullptr)
+    , sourceRange(SourceRange())
 {
 }
 
 CXXThisExpr::CXXThisExpr()
     : Expr(StmtClass::CXXThisExpr)
     , location(SourceLocation())
-    , implicit(0)
+    , implicit(false)
 {
 }
 
 CXXThrowExpr::CXXThrowExpr()
     : Expr(StmtClass::CXXThrowExpr)
-    , subExpr(nullptr)
     , throwLoc(SourceLocation())
-    , isThrownVariableInScope(0)
+    , isThrownVariableInScope(false)
 {
 }
 
 CXXDefaultArgExpr::CXXDefaultArgExpr()
     : Expr(StmtClass::CXXDefaultArgExpr)
-    , expr(nullptr)
+    , hasRewrittenInit(false)
     , usedLocation(SourceLocation())
+    , exprLoc(SourceLocation())
 {
 }
 
 CXXDefaultInitExpr::CXXDefaultInitExpr()
     : Expr(StmtClass::CXXDefaultInitExpr)
-    , field(nullptr)
-    , expr(nullptr)
+    , hasRewrittenInit(false)
+    , usedLocation(SourceLocation())
 {
 }
 
@@ -767,35 +859,37 @@ CXXBindTemporaryExpr::CXXBindTemporaryExpr()
 CXXConstructExpr::CXXConstructExpr()
     : Expr(StmtClass::CXXConstructExpr)
     , location(SourceLocation())
-    , elidable(0)
-    , hadMultipleCandidates(0)
-    , listInitialization(0)
-    , stdInitListInitialization(0)
-    , requiresZeroInitialization(0)
-    , parenOrBraceRange(SourceRange())
+    , elidable(false)
+    , hadMultipleCandidates(false)
+    , listInitialization(false)
+    , stdInitListInitialization(false)
+    , requiresZeroInitialization(false)
     , numArgs(0)
+    , isImmediateEscalating(false)
+    , parenOrBraceRange(SourceRange())
 {
 }
 
 CXXConstructExpr::CXXConstructExpr(StmtClass klass)
     : Expr(klass)
     , location(SourceLocation())
-    , elidable(0)
-    , hadMultipleCandidates(0)
-    , listInitialization(0)
-    , stdInitListInitialization(0)
-    , requiresZeroInitialization(0)
-    , parenOrBraceRange(SourceRange())
+    , elidable(false)
+    , hadMultipleCandidates(false)
+    , listInitialization(false)
+    , stdInitListInitialization(false)
+    , requiresZeroInitialization(false)
     , numArgs(0)
+    , isImmediateEscalating(false)
+    , parenOrBraceRange(SourceRange())
 {
 }
 
-DEF_VECTOR(CXXConstructExpr, Expr*, arguments)
+DEF_VECTOR(CXXConstructExpr, Stmt::CastIterator<clang::Expr, clang::Expr*, clang::Stmt*>*, arguments)
 
 CXXInheritedCtorInitExpr::CXXInheritedCtorInitExpr()
     : Expr(StmtClass::CXXInheritedCtorInitExpr)
-    , constructsVBase(0)
-    , inheritedFromVBase(0)
+    , constructsVBase(false)
+    , inheritedFromVBase(false)
     , location(SourceLocation())
 {
 }
@@ -804,7 +898,7 @@ CXXFunctionalCastExpr::CXXFunctionalCastExpr()
     : ExplicitCastExpr(StmtClass::CXXFunctionalCastExpr)
     , lParenLoc(SourceLocation())
     , rParenLoc(SourceLocation())
-    , isListInitialization(0)
+    , isListInitialization(false)
 {
 }
 
@@ -819,11 +913,13 @@ LambdaExpr::LambdaExpr()
     , capture_size(0)
     , introducerRange(SourceRange())
     , callOperator(nullptr)
-    , isGenericLambda(0)
+    , dependentCallOperator(nullptr)
+    , trailingRequiresClause(nullptr)
+    , isGenericLambda(false)
     , body(nullptr)
-    , isMutable(0)
-    , hasExplicitParameters(0)
-    , hasExplicitResultType(0)
+    , isMutable(false)
+    , hasExplicitParameters(false)
+    , hasExplicitResultType(false)
 {
 }
 
@@ -837,20 +933,19 @@ CXXScalarValueInitExpr::CXXScalarValueInitExpr()
 
 CXXNewExpr::CXXNewExpr()
     : Expr(StmtClass::CXXNewExpr)
+    , allocatedType(QualifiedType())
     , operatorNew(nullptr)
     , operatorDelete(nullptr)
-    , allocatedType(QualifiedType())
-    , isArray(0)
-    , arraySize(nullptr)
+    , isArray(false)
     , numPlacementArgs(0)
-    , isParenTypeId(0)
+    , isParenTypeId(false)
     , typeIdParens(SourceRange())
-    , isGlobalNew(0)
-    , hasInitializer(0)
+    , isGlobalNew(false)
+    , hasInitializer(false)
     , initializationStyle((CXXNewExpr::InitializationStyle::NoInit))
-    , initializer(nullptr)
     , constructExpr(nullptr)
     , directInitRange(SourceRange())
+    , sourceRange(SourceRange())
 {
 }
 
@@ -858,11 +953,10 @@ DEF_VECTOR(CXXNewExpr, Expr*, placement_arguments)
 
 CXXDeleteExpr::CXXDeleteExpr()
     : Expr(StmtClass::CXXDeleteExpr)
-    , isGlobalDelete(0)
-    , isArrayForm(0)
-    , isArrayFormAsWritten(0)
+    , isGlobalDelete(false)
+    , isArrayForm(false)
+    , isArrayFormAsWritten(false)
     , operatorDelete(nullptr)
-    , argument(nullptr)
     , destroyedType(QualifiedType())
 {
 }
@@ -870,8 +964,8 @@ CXXDeleteExpr::CXXDeleteExpr()
 CXXPseudoDestructorExpr::CXXPseudoDestructorExpr()
     : Expr(StmtClass::CXXPseudoDestructorExpr)
     , base(nullptr)
-    , hasQualifier(0)
-    , isArrow(0)
+    , hasQualifier(false)
+    , isArrow(false)
     , operatorLoc(SourceLocation())
     , colonColonLoc(SourceLocation())
     , tildeLoc(SourceLocation())
@@ -882,7 +976,7 @@ CXXPseudoDestructorExpr::CXXPseudoDestructorExpr()
 
 TypeTraitExpr::TypeTraitExpr()
     : Expr(StmtClass::TypeTraitExpr)
-    , value(0)
+    , value(false)
     , numArgs(0)
 {
 }
@@ -898,7 +992,7 @@ ArrayTypeTraitExpr::ArrayTypeTraitExpr()
 ExpressionTraitExpr::ExpressionTraitExpr()
     : Expr(StmtClass::ExpressionTraitExpr)
     , queriedExpression(nullptr)
-    , value(0)
+    , value(false)
 {
 }
 
@@ -913,8 +1007,8 @@ OverloadExpr::OverloadExpr()
     , templateKeywordLoc(SourceLocation())
     , lAngleLoc(SourceLocation())
     , rAngleLoc(SourceLocation())
-    , hasTemplateKeyword(0)
-    , hasExplicitTemplateArgs(0)
+    , hasTemplateKeyword(false)
+    , hasExplicitTemplateArgs(false)
     , numTemplateArgs(0)
 {
 }
@@ -926,16 +1020,16 @@ OverloadExpr::OverloadExpr(StmtClass klass)
     , templateKeywordLoc(SourceLocation())
     , lAngleLoc(SourceLocation())
     , rAngleLoc(SourceLocation())
-    , hasTemplateKeyword(0)
-    , hasExplicitTemplateArgs(0)
+    , hasTemplateKeyword(false)
+    , hasExplicitTemplateArgs(false)
     , numTemplateArgs(0)
 {
 }
 
 UnresolvedLookupExpr::UnresolvedLookupExpr()
     : OverloadExpr(StmtClass::UnresolvedLookupExpr)
-    , requiresADL(0)
-    , isOverloaded(0)
+    , requiresADL(false)
+    , isOverloaded(false)
 {
 }
 
@@ -945,8 +1039,8 @@ DependentScopeDeclRefExpr::DependentScopeDeclRefExpr()
     , templateKeywordLoc(SourceLocation())
     , lAngleLoc(SourceLocation())
     , rAngleLoc(SourceLocation())
-    , hasTemplateKeyword(0)
-    , hasExplicitTemplateArgs(0)
+    , hasTemplateKeyword(false)
+    , hasExplicitTemplateArgs(false)
     , numTemplateArgs(0)
 {
 }
@@ -954,17 +1048,17 @@ DependentScopeDeclRefExpr::DependentScopeDeclRefExpr()
 ExprWithCleanups::ExprWithCleanups()
     : FullExpr(StmtClass::ExprWithCleanups)
     , numObjects(0)
-    , cleanupsHaveSideEffects(0)
+    , cleanupsHaveSideEffects(false)
 {
 }
 
 CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr()
     : Expr(StmtClass::CXXUnresolvedConstructExpr)
+    , typeAsWritten(QualifiedType())
     , lParenLoc(SourceLocation())
     , rParenLoc(SourceLocation())
-    , typeAsWritten(QualifiedType())
-    , isListInitialization(0)
-    , arg_size(0)
+    , isListInitialization(false)
+    , numArgs(0)
 {
 }
 
@@ -972,45 +1066,46 @@ DEF_VECTOR(CXXUnresolvedConstructExpr, Expr*, arguments)
 
 CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr()
     : Expr(StmtClass::CXXDependentScopeMemberExpr)
-    , isImplicitAccess(0)
+    , isImplicitAccess(false)
     , base(nullptr)
     , baseType(QualifiedType())
-    , isArrow(0)
+    , isArrow(false)
     , operatorLoc(SourceLocation())
     , firstQualifierFoundInScope(nullptr)
     , memberLoc(SourceLocation())
     , templateKeywordLoc(SourceLocation())
     , lAngleLoc(SourceLocation())
     , rAngleLoc(SourceLocation())
-    , hasTemplateKeyword(0)
-    , hasExplicitTemplateArgs(0)
+    , hasTemplateKeyword(false)
+    , hasExplicitTemplateArgs(false)
     , numTemplateArgs(0)
 {
 }
 
 UnresolvedMemberExpr::UnresolvedMemberExpr()
     : OverloadExpr(StmtClass::UnresolvedMemberExpr)
-    , isImplicitAccess(0)
-    , base(nullptr)
+    , isImplicitAccess(false)
     , baseType(QualifiedType())
-    , hasUnresolvedUsing(0)
-    , isArrow(0)
+    , hasUnresolvedUsing(false)
+    , isArrow(false)
     , operatorLoc(SourceLocation())
     , memberLoc(SourceLocation())
+    , exprLoc(SourceLocation())
 {
 }
 
 CXXNoexceptExpr::CXXNoexceptExpr()
     : Expr(StmtClass::CXXNoexceptExpr)
     , operand(nullptr)
-    , value(0)
+    , sourceRange(SourceRange())
+    , value(false)
 {
 }
 
 PackExpansionExpr::PackExpansionExpr()
     : Expr(StmtClass::PackExpansionExpr)
-    , pattern(nullptr)
     , ellipsisLoc(SourceLocation())
+    , numExpansions(optional<unsigned int>())
 {
 }
 
@@ -1021,7 +1116,7 @@ SizeOfPackExpr::SizeOfPackExpr()
     , rParenLoc(SourceLocation())
     , pack(nullptr)
     , packLength(0)
-    , isPartiallySubstituted(0)
+    , isPartiallySubstituted(false)
 {
 }
 
@@ -1029,11 +1124,17 @@ SubstNonTypeTemplateParmExpr::SubstNonTypeTemplateParmExpr()
     : Expr(StmtClass::SubstNonTypeTemplateParmExpr)
     , nameLoc(SourceLocation())
     , replacement(nullptr)
+    , associatedDecl(nullptr)
+    , index(0)
+    , packIndex(optional<unsigned int>())
+    , isReferenceParameter(false)
 {
 }
 
 SubstNonTypeTemplateParmPackExpr::SubstNonTypeTemplateParmPackExpr()
     : Expr(StmtClass::SubstNonTypeTemplateParmPackExpr)
+    , associatedDecl(nullptr)
+    , index(0)
     , parameterPackLocation(SourceLocation())
     , argumentPack(TemplateArgument())
 {
@@ -1046,58 +1147,66 @@ FunctionParmPackExpr::FunctionParmPackExpr()
 {
 }
 
-MaterializeTemporaryExpr::ExtraState::ExtraState()
-{
-}
-
 MaterializeTemporaryExpr::MaterializeTemporaryExpr()
     : Expr(StmtClass::MaterializeTemporaryExpr)
-    , temporary(nullptr)
-    , TemporaryExpr(nullptr)
+    , subExpr(nullptr)
     , manglingNumber(0)
-    , isBoundToLvalueReference(0)
+    , isBoundToLvalueReference(false)
 {
 }
 
 CXXFoldExpr::CXXFoldExpr()
     : Expr(StmtClass::CXXFoldExpr)
+    , callee(nullptr)
     , lHS(nullptr)
     , rHS(nullptr)
-    , isRightFold(0)
-    , isLeftFold(0)
+    , isRightFold(false)
+    , isLeftFold(false)
     , pattern(nullptr)
     , init(nullptr)
+    , lParenLoc(SourceLocation())
+    , rParenLoc(SourceLocation())
     , ellipsisLoc(SourceLocation())
     , _operator((BinaryOperatorKind::PtrMemD))
+    , numExpansions(optional<unsigned int>())
+{
+}
+
+CXXParenListInitExpr::CXXParenListInitExpr()
+    : Expr(StmtClass::CXXParenListInitExpr)
+    , initLoc(SourceLocation())
+    , sourceRange(SourceRange())
+    , arrayFiller(nullptr)
 {
 }
 
 CoroutineSuspendExpr::CoroutineSuspendExpr()
     : Expr(StmtClass::NoStmt)
-    , keywordLoc(SourceLocation())
     , commonExpr(nullptr)
     , opaqueValue(nullptr)
     , readyExpr(nullptr)
     , suspendExpr(nullptr)
     , resumeExpr(nullptr)
+    , operand(nullptr)
+    , keywordLoc(SourceLocation())
 {
 }
 
 CoroutineSuspendExpr::CoroutineSuspendExpr(StmtClass klass)
     : Expr(klass)
-    , keywordLoc(SourceLocation())
     , commonExpr(nullptr)
     , opaqueValue(nullptr)
     , readyExpr(nullptr)
     , suspendExpr(nullptr)
     , resumeExpr(nullptr)
+    , operand(nullptr)
+    , keywordLoc(SourceLocation())
 {
 }
 
 CoawaitExpr::CoawaitExpr()
     : CoroutineSuspendExpr(StmtClass::CoawaitExpr)
-    , isImplicit(0)
-    , operand(nullptr)
+    , isImplicit(false)
 {
 }
 
@@ -1111,7 +1220,11 @@ DependentCoawaitExpr::DependentCoawaitExpr()
 
 CoyieldExpr::CoyieldExpr()
     : CoroutineSuspendExpr(StmtClass::CoyieldExpr)
-    , operand(nullptr)
+{
+}
+
+BuiltinBitCastExpr::BuiltinBitCastExpr()
+    : ExplicitCastExpr(StmtClass::BuiltinBitCastExpr)
 {
 }
 

@@ -186,7 +186,6 @@ public:
     DeclStmt();
     VECTOR(Declaration*, decls)
     bool isSingleDecl;
-    Declaration* singleDecl;
 };
 
 class CS_API NullStmt : public Stmt
@@ -204,8 +203,7 @@ public:
     VECTOR(Stmt*, body)
     bool body_empty;
     unsigned int size;
-    Stmt* body_front;
-    Stmt* body_back;
+    bool hasStoredFPFeatures;
     SourceLocation lBracLoc;
     SourceLocation rBracLoc;
 };
@@ -217,7 +215,6 @@ public:
     SwitchCase(StmtClass klass);
     SourceLocation keywordLoc;
     SourceLocation colonLoc;
-    Stmt* subStmt;
 };
 
 class CS_API CaseStmt : public SwitchCase
@@ -229,12 +226,14 @@ public:
     SourceLocation ellipsisLoc;
     Expr* lHS;
     Expr* rHS;
+    Stmt* subStmt;
 };
 
 class CS_API DefaultStmt : public SwitchCase
 {
 public:
     DefaultStmt();
+    Stmt* subStmt;
     SourceLocation defaultLoc;
 };
 
@@ -260,14 +259,12 @@ class CS_API AttributedStmt : public ValueStmt
 public:
     AttributedStmt();
     SourceLocation attrLoc;
-    Stmt* subStmt;
 };
 
 class CS_API IfStmt : public Stmt
 {
 public:
     IfStmt();
-    bool _constexpr;
     bool hasInitStorage;
     bool hasVarStorage;
     bool hasElseStorage;
@@ -278,6 +275,11 @@ public:
     Stmt* init;
     SourceLocation ifLoc;
     SourceLocation elseLoc;
+    bool isConsteval;
+    bool isNonNegatedConsteval;
+    bool isNegatedConsteval;
+    bool isConstexpr;
+    IfStatementKind statementKind;
     bool isObjCAvailabilityCheck;
     SourceLocation lParenLoc;
     SourceLocation rParenLoc;
@@ -381,8 +383,8 @@ class CS_API AsmStmt : public Stmt
 public:
     AsmStmt();
     AsmStmt(StmtClass klass);
-    VECTOR(Expr*, inputs)
-    VECTOR(Expr*, outputs)
+    VECTOR(Stmt::CastIterator<clang::Expr, clang::Expr*, clang::Stmt*>*, inputs)
+    VECTOR(Stmt::CastIterator<clang::Expr, clang::Expr*, clang::Stmt*>*, outputs)
     SourceLocation asmLoc;
     bool simple;
     bool _volatile;
@@ -415,7 +417,10 @@ public:
     };
 
     GCCAsmStmt();
+    VECTOR(Stmt::CastIterator<clang::AddrLabelExpr, clang::AddrLabelExpr*, clang::Stmt*>*, labels)
     SourceLocation rParenLoc;
+    bool isAsmGoto;
+    unsigned int numLabels;
 };
 
 class CS_API MSAsmStmt : public AsmStmt
@@ -493,7 +498,6 @@ public:
 
     CapturedStmt();
     VECTOR(Expr*, capture_inits)
-    Stmt* capturedStmt;
     unsigned int capture_size;
     SourceRange sourceRange;
 };
@@ -512,7 +516,6 @@ class CS_API CXXTryStmt : public Stmt
 public:
     CXXTryStmt();
     SourceLocation tryLoc;
-    CompoundStmt* tryBlock;
     unsigned int numHandlers;
 };
 
@@ -525,10 +528,6 @@ public:
     Expr* cond;
     Expr* inc;
     Stmt* body;
-    DeclStmt* rangeStmt;
-    DeclStmt* beginStmt;
-    DeclStmt* endStmt;
-    DeclStmt* loopVarStmt;
     SourceLocation forLoc;
     SourceLocation coawaitLoc;
     SourceLocation colonLoc;
@@ -585,8 +584,9 @@ public:
     };
 
     CoroutineBodyStmt();
+    VECTOR(StmtIterator*, childrenExclBody)
     bool hasDependentPromiseType;
-    Stmt* body;
+    CompoundStmt* body;
     Stmt* promiseDeclStmt;
     Stmt* initSuspendStmt;
     Stmt* finalSuspendStmt;

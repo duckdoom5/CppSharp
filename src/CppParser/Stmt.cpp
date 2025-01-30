@@ -29,7 +29,6 @@ Stmt::Stmt(StmtClass klass)
 
 DeclStmt::DeclStmt()
     : Stmt(StmtClass::DeclStmt)
-    , singleDecl(nullptr)
     , isSingleDecl(false)
 {
 }
@@ -47,8 +46,7 @@ CompoundStmt::CompoundStmt()
     : Stmt(StmtClass::CompoundStmt)
     , body_empty(false)
     , size(0)
-    , body_front(nullptr)
-    , body_back(nullptr)
+    , hasStoredFPFeatures(false)
     , lBracLoc(SourceLocation())
     , rBracLoc(SourceLocation())
 {
@@ -60,7 +58,6 @@ SwitchCase::SwitchCase()
     : Stmt(StmtClass::NoStmt)
     , keywordLoc(SourceLocation())
     , colonLoc(SourceLocation())
-    , subStmt(nullptr)
 {
 }
 
@@ -68,7 +65,6 @@ SwitchCase::SwitchCase(StmtClass klass)
     : Stmt(klass)
     , keywordLoc(SourceLocation())
     , colonLoc(SourceLocation())
-    , subStmt(nullptr)
 {
 }
 
@@ -79,11 +75,13 @@ CaseStmt::CaseStmt()
     , ellipsisLoc(SourceLocation())
     , lHS(nullptr)
     , rHS(nullptr)
+    , subStmt(nullptr)
 {
 }
 
 DefaultStmt::DefaultStmt()
     : SwitchCase(StmtClass::DefaultStmt)
+    , subStmt(nullptr)
     , defaultLoc(SourceLocation())
 {
 }
@@ -103,13 +101,13 @@ LabelStmt::LabelStmt()
     , identLoc(SourceLocation())
     , name(nullptr)
     , subStmt(nullptr)
+    , sideEntry(false)
 {
 }
 
 AttributedStmt::AttributedStmt()
     : ValueStmt(StmtClass::AttributedStmt)
     , attrLoc(SourceLocation())
-    , subStmt(nullptr)
 {
 }
 
@@ -125,7 +123,11 @@ IfStmt::IfStmt()
     , init(nullptr)
     , ifLoc(SourceLocation())
     , elseLoc(SourceLocation())
-    , _constexpr(0)
+    , isConsteval(false)
+    , isNonNegatedConsteval(false)
+    , isNegatedConsteval(false)
+    , isConstexpr(false)
+    , statementKind((IfStatementKind::Ordinary))
     , isObjCAvailabilityCheck(false)
     , lParenLoc(SourceLocation())
     , rParenLoc(SourceLocation())
@@ -240,9 +242,9 @@ AsmStmt::AsmStmt(StmtClass klass)
 {
 }
 
-DEF_VECTOR(AsmStmt, Expr*, inputs)
+DEF_VECTOR(AsmStmt, Stmt::CastIterator<clang::Expr, clang::Expr*, clang::Stmt*>*, inputs)
 
-DEF_VECTOR(AsmStmt, Expr*, outputs)
+DEF_VECTOR(AsmStmt, Stmt::CastIterator<clang::Expr, clang::Expr*, clang::Stmt*>*, outputs)
 
 GCCAsmStmt::AsmStringPiece::AsmStringPiece()
 {
@@ -251,8 +253,12 @@ GCCAsmStmt::AsmStringPiece::AsmStringPiece()
 GCCAsmStmt::GCCAsmStmt()
     : AsmStmt(StmtClass::GCCAsmStmt)
     , rParenLoc(SourceLocation())
+    , isAsmGoto(false)
+    , numLabels(0)
 {
 }
+
+DEF_VECTOR(GCCAsmStmt, Stmt::CastIterator<clang::AddrLabelExpr, clang::AddrLabelExpr*, clang::Stmt*>*, labels)
 
 MSAsmStmt::MSAsmStmt()
     : AsmStmt(StmtClass::MSAsmStmt)
@@ -300,7 +306,6 @@ CapturedStmt::Capture::Capture()
 
 CapturedStmt::CapturedStmt()
     : Stmt(StmtClass::CapturedStmt)
-    , capturedStmt(nullptr)
     , capture_size(0)
     , sourceRange(SourceRange())
 {
@@ -319,7 +324,6 @@ CXXCatchStmt::CXXCatchStmt()
 CXXTryStmt::CXXTryStmt()
     : Stmt(StmtClass::CXXTryStmt)
     , tryLoc(SourceLocation())
-    , tryBlock(nullptr)
     , numHandlers(0)
 {
 }
@@ -331,10 +335,6 @@ CXXForRangeStmt::CXXForRangeStmt()
     , cond(nullptr)
     , inc(nullptr)
     , body(nullptr)
-    , rangeStmt(nullptr)
-    , beginStmt(nullptr)
-    , endStmt(nullptr)
-    , loopVarStmt(nullptr)
     , forLoc(SourceLocation())
     , coawaitLoc(SourceLocation())
     , colonLoc(SourceLocation())
@@ -373,6 +373,8 @@ CoroutineBodyStmt::CoroutineBodyStmt()
     , returnStmtOnAllocFailure(nullptr)
 {
 }
+
+DEF_VECTOR(CoroutineBodyStmt, StmtIterator*, childrenExclBody)
 
 CoreturnStmt::CoreturnStmt()
     : Stmt(StmtClass::CoreturnStmt)

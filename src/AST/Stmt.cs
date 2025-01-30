@@ -184,7 +184,6 @@ namespace CppSharp.AST
 
         public List<Declaration> Decls { get; private set; } = new List<Declaration>();
         public bool IsSingleDecl { get; set; }
-        public Declaration SingleDecl { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
             visitor.VisitDeclStmt(this);
@@ -212,8 +211,7 @@ namespace CppSharp.AST
         public List<Stmt> Body { get; private set; } = new List<Stmt>();
         public bool BodyEmpty { get; set; }
         public uint Size { get; set; }
-        public Stmt BodyFront { get; set; }
-        public Stmt BodyBack { get; set; }
+        public bool HasStoredFPFeatures { get; set; }
         public SourceLocation LBracLoc { get; set; }
         public SourceLocation RBracLoc { get; set; }
 
@@ -229,7 +227,6 @@ namespace CppSharp.AST
 
         public SourceLocation KeywordLoc { get; set; }
         public SourceLocation ColonLoc { get; set; }
-        public Stmt SubStmt { get; set; }
     }
 
     public partial class CaseStmt : SwitchCase
@@ -243,6 +240,7 @@ namespace CppSharp.AST
         public SourceLocation EllipsisLoc { get; set; }
         public Expr LHS { get; set; }
         public Expr RHS { get; set; }
+        public Stmt SubStmt { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
             visitor.VisitCaseStmt(this);
@@ -254,6 +252,7 @@ namespace CppSharp.AST
         {
         }
 
+        public Stmt SubStmt { get; set; }
         public SourceLocation DefaultLoc { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
@@ -280,6 +279,7 @@ namespace CppSharp.AST
         public SourceLocation IdentLoc { get; set; }
         public string Name { get; set; }
         public Stmt SubStmt { get; set; }
+        public bool SideEntry { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
             visitor.VisitLabelStmt(this);
@@ -292,7 +292,6 @@ namespace CppSharp.AST
         }
 
         public SourceLocation AttrLoc { get; set; }
-        public Stmt SubStmt { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
             visitor.VisitAttributedStmt(this);
@@ -314,7 +313,11 @@ namespace CppSharp.AST
         public Stmt Init { get; set; }
         public SourceLocation IfLoc { get; set; }
         public SourceLocation ElseLoc { get; set; }
-        public bool Constexpr { get; set; }
+        public bool IsConsteval { get; set; }
+        public bool IsNonNegatedConsteval { get; set; }
+        public bool IsNegatedConsteval { get; set; }
+        public bool IsConstexpr { get; set; }
+        public IfStatementKind StatementKind { get; set; }
         public bool IsObjCAvailabilityCheck { get; set; }
         public SourceLocation LParenLoc { get; set; }
         public SourceLocation RParenLoc { get; set; }
@@ -467,8 +470,8 @@ namespace CppSharp.AST
         {
         }
 
-        public List<Expr> Inputs { get; private set; } = new List<Expr>();
-        public List<Expr> Outputs { get; private set; } = new List<Expr>();
+        public List<Stmt.CastIterator> Inputs { get; private set; } = new List<Stmt.CastIterator>();
+        public List<Stmt.CastIterator> Outputs { get; private set; } = new List<Stmt.CastIterator>();
         public SourceLocation AsmLoc { get; set; }
         public bool Simple { get; set; }
         public bool Volatile { get; set; }
@@ -503,7 +506,10 @@ namespace CppSharp.AST
         {
         }
 
+        public List<Stmt.CastIterator> Labels { get; private set; } = new List<Stmt.CastIterator>();
         public SourceLocation RParenLoc { get; set; }
+        public bool IsAsmGoto { get; set; }
+        public uint NumLabels { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
             visitor.VisitGCCAsmStmt(this);
@@ -609,7 +615,6 @@ namespace CppSharp.AST
         }
 
         public List<Expr> CaptureInits { get; private set; } = new List<Expr>();
-        public Stmt capturedStmt { get; set; }
         public uint CaptureSize { get; set; }
         public SourceRange SourceRange { get; set; }
 
@@ -638,7 +643,6 @@ namespace CppSharp.AST
         }
 
         public SourceLocation TryLoc { get; set; }
-        public CompoundStmt TryBlock { get; set; }
         public uint NumHandlers { get; set; }
 
         public override T Visit<T>(IStmtVisitor<T> visitor) =>
@@ -656,10 +660,6 @@ namespace CppSharp.AST
         public Expr Cond { get; set; }
         public Expr Inc { get; set; }
         public Stmt Body { get; set; }
-        public DeclStmt RangeStmt { get; set; }
-        public DeclStmt BeginStmt { get; set; }
-        public DeclStmt EndStmt { get; set; }
-        public DeclStmt LoopVarStmt { get; set; }
         public SourceLocation ForLoc { get; set; }
         public SourceLocation CoawaitLoc { get; set; }
         public SourceLocation ColonLoc { get; set; }
@@ -728,6 +728,7 @@ namespace CppSharp.AST
         {
         }
 
+        public List<StmtIterator> ChildrenExclBody { get; private set; } = new List<StmtIterator>();
         public bool HasDependentPromiseType { get; set; }
         public CompoundStmt Body { get; set; }
         public Stmt PromiseDeclStmt { get; set; }

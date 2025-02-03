@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace CppSharp.AST
@@ -309,6 +310,50 @@ namespace CppSharp.AST
                 return null;
 
             return @namespace.FindTypedef(typeDefName, createDecl);
+        }
+
+        /// <summary>
+        /// Checks if a name is ambiguous in this context.
+        /// A name is ambiguous if it is used in more than one declaration.
+        /// If a typedef of the same name is declared, we assume the name is not ambiguous.
+        /// </summary>
+        /// <param name="decl">The declaration to check for.</param>
+        /// <returns>True if the name is ambiguous, false otherwise.</returns>
+        public bool IsAmbiguousName(Declaration decl, bool onlyCurrentTranslationUnit = false)
+        {
+            Debug.Assert(decl.Namespace.QualifiedName.Equals(QualifiedName));
+
+            var name = decl.Name;
+            
+            if (Typedefs.Any(e => e != decl && e.Name.Equals(name)))
+                return false;
+
+            if (Enums.Any(e => e != decl && e.Name.Equals(name)))
+                return true;
+            
+            if (Functions.Any(e => e != decl && e.Name.Equals(name)))
+                return true;
+            
+            if (Classes.Any(e => e != decl && e.Name.Equals(name)))
+                return true;
+
+            if (onlyCurrentTranslationUnit)
+                return false;
+
+            var dependencies = TranslationUnit.Module.Dependencies;
+            if (dependencies.Count == 0)
+                return false;
+
+            // TODO: Filter out units that are not included in the current translation unit.
+            IEnumerable<Namespace> namespaces = dependencies.SelectMany(m => m.Units);
+            
+            if (!IsRoot)
+            {
+                namespaces = namespaces.Select(unit => unit.FindNamespace(decl.QualifiedName))
+                    .Where(n => n != null);
+            }
+
+            return namespaces.Any(@namespace => @namespace.IsAmbiguousName(decl, true));
         }
 
         public T FindType<T>(string name) where T : Declaration

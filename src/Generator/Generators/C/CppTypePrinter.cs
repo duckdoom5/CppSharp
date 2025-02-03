@@ -786,10 +786,9 @@ namespace CppSharp.Generators.C
 
         public string PrintTag(Class @class)
         {
-            if (@class.Namespace.Typedefs.Any(t => t.Name == @class.Name))
-            {
+            if (!@class.IsIncomplete && !@class.Namespace.IsAmbiguousName(@class))
                 return string.Empty;
-            }
+            
             switch (@class.TagKind)
             {
                 case TagKind.Struct:
@@ -801,7 +800,7 @@ namespace CppSharp.Generators.C
                 case TagKind.Class:
                     return "class ";
                 case TagKind.Enum:
-                    return "enum ";
+                    return @class.Enums.First().IsScoped ? "enum class" : "enum ";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(@class.TagKind));
             }

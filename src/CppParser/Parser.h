@@ -149,6 +149,8 @@ private:
                                     MacroLocation macroLocation = MacroLocation::Unknown);
     bool GetDeclText(clang::SourceRange SR, std::string& Text);
     bool HasLayout(const clang::RecordDecl* Record);
+    bool ShouldSkipSystemHeaders() const;
+    bool ShouldSkipSourceLocation(clang::SourceLocation Loc) const;
 
     TranslationUnit* GetTranslationUnit(clang::SourceLocation Loc,
         SourceLocationKind *Kind = 0);

@@ -201,6 +201,12 @@ namespace CppSharp
                 void set(bool);
             }
 
+            property bool SkipSystemHeaders
+            {
+                bool get();
+                void set(bool);
+            }
+
             property ::System::String^ ClangVersion
             {
                 ::System::String^ get();

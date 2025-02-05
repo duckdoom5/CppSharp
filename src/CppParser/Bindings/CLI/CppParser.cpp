@@ -552,6 +552,16 @@ void CppSharp::Parser::CppParserOptions::SkipFunctionBodies::set(bool value)
     ((struct ::CppSharp::CppParser::CppParserOptions*)NativePtr)->skipFunctionBodies = value;
 }
 
+bool CppSharp::Parser::CppParserOptions::SkipSystemHeaders::get()
+{
+    return NativePtr->skipSystemHeaders;
+}
+
+void CppSharp::Parser::CppParserOptions::SkipSystemHeaders::set(bool value)
+{
+    ((struct ::CppSharp::CppParser::CppParserOptions*)NativePtr)->skipSystemHeaders = value;
+}
+
 ::System::String^ CppSharp::Parser::CppParserOptions::ClangVersion::get()
 {
     auto ___ret = ((struct ::CppSharp::CppParser::CppParserOptions*)NativePtr)->getClangVersion();

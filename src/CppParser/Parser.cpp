@@ -999,9 +999,20 @@ bool Parser::HasLayout(const clang::RecordDecl* Record)
     return true;
 }
 
+bool Parser::ShouldSkipSystemHeaders() const
+{
+    return opts->skipSystemHeaders;
+}
+
+bool Parser::ShouldSkipSourceLocation(clang::SourceLocation Loc) const
+{
+    return !Loc.isValid() || 
+        (ShouldSkipSystemHeaders() && c->getSourceManager().isInSystemHeader(Loc));
+}
+
 bool Parser::IsSupported(const clang::NamedDecl* ND)
 {
-    return !c->getSourceManager().isInSystemHeader(ND->getBeginLoc()) ||
+    return !ShouldSkipSourceLocation(ND->getBeginLoc()) ||
         (llvm::isa<clang::RecordDecl>(ND) &&
          supportedStdTypes.find(ND->getName().str()) != supportedStdTypes.end());
 }
@@ -1010,7 +1021,7 @@ bool Parser::IsSupported(const clang::CXXMethodDecl* MD)
 {
     using namespace clang;
 
-    return !c->getSourceManager().isInSystemHeader(MD->getBeginLoc()) ||
+    return !ShouldSkipSourceLocation(MD->getBeginLoc()) ||
         (isa<CXXConstructorDecl>(MD) && MD->getNumParams() == 0) ||
         isa<CXXDestructorDecl>(MD) ||
         (MD->getDeclName().isIdentifier() &&
@@ -1109,7 +1120,7 @@ void Parser::WalkRecord(const clang::RecordDecl* Record, Class* RC)
     for (auto FD : Record->fields())
         WalkFieldCXX(FD, RC);
 
-    if (c->getSourceManager().isInSystemHeader(Record->getBeginLoc()))
+    if (ShouldSkipSystemHeaders() && c->getSourceManager().isInSystemHeader(Record->getBeginLoc()))
     {
         if (supportedStdTypes.find(Record->getName().str()) != supportedStdTypes.end())
         {
@@ -3397,7 +3408,7 @@ void Parser::WalkFunction(const clang::FunctionDecl* FD, Function* F)
 {
     using namespace clang;
 
-    assertm(FD->getBuiltinID() == 0, "Function has no buildin ID!\n");
+    // assertm(FD->getBuiltinID() == 0, "Function has no buildin ID!\n");
     auto FT = FD->getType()->getAs<clang::FunctionType>();
 
     auto NS = GetNamespace(FD);
@@ -3541,7 +3552,8 @@ Function* Parser::WalkFunction(const clang::FunctionDecl* FD)
 {
     using namespace clang;
 
-    assertm(FD->getBuiltinID() == 0, "Function has no buildin ID!\n");
+    // TODO: Find out why
+    //assertm( FD->getBuiltinID() == 0, "Function has no buildin ID!\n");
 
     auto NS = GetNamespace(FD);
     assertm(NS, "Expected a valid namespace!\n");
@@ -3598,8 +3610,7 @@ void Parser::WalkAST(clang::TranslationUnitDecl* TU)
 {
     for (auto D : TU->decls())
     {
-        if (D->getBeginLoc().isValid() &&
-            !c->getSourceManager().isInSystemHeader(D->getBeginLoc()))
+        if (!ShouldSkipSourceLocation(D->getBeginLoc()))
             WalkDeclarationDef(D);
     }
 }

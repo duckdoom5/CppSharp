@@ -1163,16 +1163,19 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             }
             else
             {
-                Class @class;
-                if (type.TryGetClass(out @class) && @class.HasNonTrivialCopyConstructor)
+                if (!type.TryGetClass(out Class @class))
                 {
-                    Method cctor = @class.Methods.First(c => c.IsCopyConstructor);
-                    WriteLine($@"{TypePrinter.PrintNative(type)}.{GetFunctionNativeIdentifier(cctor)}({call}, {marshal.Context.Return});");
+                    WriteLine($"*({TypePrinter.PrintNative(type)}*) {call} = {marshal.Context.ArgumentPrefix}{marshal.Context.Return};");
                 }
                 else
                 {
-                    WriteLine($@"*({TypePrinter.PrintNative(type)}*) {call} = {marshal.Context.ArgumentPrefix}{marshal.Context.Return};");
+                    if (@class.HasNonTrivialCopyConstructor)
+                    {
+                        Method cctor = @class.Methods.First(c => c.IsCopyConstructor);
+                        WriteLine($"{TypePrinter.PrintNative(type)}.{GetFunctionNativeIdentifier(cctor)}({call}, {marshal.Context.Return});");
+                    }
                 }
+                
             }
             if (paramMarshal.HasUsingBlock)
                 UnindentAndWriteCloseBrace();
@@ -3513,10 +3516,10 @@ internal static{(@new ? " new" : string.Empty)} {printedClass} __GetInstance({Ty
                 var method = function as Method;
                 if (method != null)
                 {
-                    if (method.IsConstructor && !method.IsCopyConstructor)
-                        identifier.Append("ctor");
-                    else if (method.IsCopyConstructor)
+                    if (method.IsCopyConstructor)
                         identifier.Append("cctor");
+                    else if (method.IsConstructor)
+                        identifier.Append("ctor");
                     else if (method.IsDestructor)
                         identifier.Append("dtor");
                     else

@@ -56,7 +56,7 @@ namespace CppSharp.AST
                 return string.Join(", ", template.Parameters.Select(p => p.Name));
             }
 
-            var type = Type.Desugar();
+            var type = Type.Desugar().SkipPointerRefs();
             IEnumerable<TemplateArgument> templateArgs;
             var templateSpecializationType = type as TemplateSpecializationType;
             if (templateSpecializationType != null)

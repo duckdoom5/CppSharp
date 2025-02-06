@@ -258,6 +258,10 @@ namespace CppSharp.Generators.CLI
         public override TypePrinterResult VisitTemplateParameterType(
             TemplateParameterType param, TypeQualifiers quals)
         {
+            // TODO: Fix parser passing null parameters
+            if (param.Parameter == null)
+                return "";
+
             return param.Parameter.Name;
         }
 

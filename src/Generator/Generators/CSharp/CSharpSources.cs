@@ -1048,7 +1048,8 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             {
                 Parameter = param,
                 ArgName = param.Name,
-                ReturnVarName = returnVar
+                ReturnVarName = returnVar,
+                DeclContext = field,
             };
             ctx.PushMarshalKind(MarshalKind.NativeField);
 
@@ -1326,7 +1327,8 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             if (ctx.HasCodeBlock)
                 Indent();
 
-            WriteLine("return {0};", marshal.Context.Return);
+            var returnMethod = marshal.Context.IsCoroutine ? "yield return" : "return";
+            WriteLine("{0} {1};", returnMethod, marshal.Context.Return);
 
             if (ctx.HasCodeBlock)
                 UnindentAndWriteCloseBrace();
@@ -1411,7 +1413,8 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             {
                 ArgName = field.Name,
                 ReturnVarName = returnVar,
-                ReturnType = returnType
+                ReturnType = returnType,
+                DeclContext = field
             };
             ctx.PushMarshalKind(MarshalKind.NativeField);
 
@@ -1424,7 +1427,7 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             if (ctx.HasCodeBlock)
                 Indent();
 
-            Write("return ");
+            Write(marshal.Context.IsCoroutine ? "yield return " : "return ");
 
             var @return = marshal.Context.Return.ToString();
             if (fieldType.IsPointer())

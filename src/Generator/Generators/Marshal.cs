@@ -32,6 +32,10 @@ namespace CppSharp.Generators
         public Function Function { get; set; }
 
         public uint Indentation { get; }
+
+        public bool IsCoroutine { get; set; }
+
+        public Declaration DeclContext { get; init; }
     }
 
     public abstract class MarshalPrinter<C, P> : AstVisitor where C : MarshalContext where P : TypePrinter

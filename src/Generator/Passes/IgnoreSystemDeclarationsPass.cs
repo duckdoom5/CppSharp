@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using CppSharp.AST;
 using CppSharp.AST.Extensions;
+using CppSharp.Types;
 
 namespace CppSharp.Passes
 {
@@ -24,19 +25,38 @@ namespace CppSharp.Passes
 
         public override bool VisitClassDecl(Class @class)
         {
-            if (!base.VisitClassDecl(@class) || Options.IsCLIGenerator)
+            if (!base.VisitClassDecl(@class) || @class.Ignore)
                 return false;
 
+            // Only check system types
             if (!@class.TranslationUnit.IsSystemHeader)
+                return false;
+
+            // Ignore std implementation detail classes
+            if (@class.QualifiedName.StartsWith("std::_"))
+            {
+                @class.ExplicitlyIgnore();
+                return true;
+            }
+
+            if (Options.IsCLIGenerator)
+                return false;
+
+            if (Context.TypeMaps.FindTypeMap(@class, out TypeMap _))
                 return false;
 
             @class.ExplicitlyIgnore();
 
             if (!@class.IsDependent || @class.Specializations.Count == 0)
-                return false;
+                return true;
 
             foreach (var specialization in @class.Specializations.Where(s => s.IsGenerated))
+            {
+                if (Context.TypeMaps.FindTypeMap(specialization, out TypeMap _))
+                    return false;
+
                 specialization.ExplicitlyIgnore();
+            }
 
             // we only need a few members for marshalling so strip the rest
             switch (@class.Name)
@@ -55,8 +75,10 @@ namespace CppSharp.Passes
                         specialization.GenerationKind = GenerationKind.Generate;
                         InternalizeSpecializationsInFields(specialization);
                     }
-                    break;
+                    return true;
             }
+
+            Diagnostics.Warning("Ignoring unsupported std type: {0}", @class.QualifiedName);
             return true;
         }
 

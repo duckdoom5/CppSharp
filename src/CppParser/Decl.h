@@ -85,6 +85,7 @@ namespace CppSharp
                 int lineNumberStart;
                 int lineNumberEnd;
                 std::string name;
+                std::string mangledName;
                 std::string USR;
                 std::string debugText;
                 bool isIncomplete;

@@ -59,6 +59,7 @@
 #include <Driver/ToolChains/MSVC.h>
 
 #include "ASTNameMangler.h"
+#include "ASTNodeVisitor.h"
 
 #if defined(__APPLE__) || defined(__linux__)
 #ifndef _GNU_SOURCE
@@ -4561,6 +4562,15 @@ void SemaConsumer::HandleTranslationUnit(clang::ASTContext& Ctx)
 
     if (Unit->originalPtr == nullptr)
         Unit->originalPtr = (void*)FileEntry;
+
+    std::string Text;
+    Text.reserve(200000000);
+    {
+        llvm::raw_string_ostream OS(Text);
+
+        ASTNodeDumper Dumper(OS, Ctx, Parser);
+        Dumper.Visit(TU);
+    }
 
     Parser.WalkAST(TU);
 }

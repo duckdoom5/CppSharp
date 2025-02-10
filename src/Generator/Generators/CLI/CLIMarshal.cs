@@ -777,7 +777,8 @@ namespace CppSharp.Generators.CLI
             {
                 ArgName = fieldRef,
                 ParameterIndex = Context.ParameterIndex++,
-                ReturnVarName = $"{marshalVar}.{property.Field.OriginalName}"
+                ReturnVarName = $"{marshalVar}.{property.Field.OriginalName}",
+                DeclarationScope = property
             };
 
             var marshal = new CLIMarshalManagedToNativePrinter(marshalCtx);

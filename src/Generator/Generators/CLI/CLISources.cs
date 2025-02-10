@@ -405,7 +405,8 @@ namespace CppSharp.Generators.CLI
                 {
                     Parameter = param,
                     ArgName = param.Name,
-                    ReturnVarName = variable
+                    ReturnVarName = variable,
+                    DeclarationScope = function
                 };
 
                 var marshal = new CLIMarshalManagedToNativePrinter(ctx);
@@ -416,7 +417,8 @@ namespace CppSharp.Generators.CLI
                     var ctx2 = new MarshalContext(Context, CurrentIndentation)
                     {
                         Parameter = indexParameter,
-                        ArgName = indexParameter.Name
+                        ArgName = indexParameter.Name,
+                        DeclarationScope = function
                     };
 
                     var marshal2 = new CLIMarshalManagedToNativePrinter(ctx2);
@@ -493,7 +495,8 @@ namespace CppSharp.Generators.CLI
                 {
                     ArgName = decl.Name,
                     ReturnVarName = variable,
-                    ReturnType = decl.QualifiedType
+                    ReturnType = decl.QualifiedType,
+                    DeclarationScope = decl
                 };
                 ctx.PushMarshalKind(MarshalKind.NativeField);
 
@@ -598,7 +601,8 @@ namespace CppSharp.Generators.CLI
                 var ctx = new MarshalContext(Context, CurrentIndentation)
                 {
                     ReturnVarName = param.Name,
-                    ReturnType = param.QualifiedType
+                    ReturnType = param.QualifiedType,
+                    DeclarationScope = param.Namespace
                 };
 
                 var marshal = new CLIMarshalNativeToManagedPrinter(ctx);
@@ -702,7 +706,8 @@ namespace CppSharp.Generators.CLI
                     ArgName = property.Name,
                     ReturnVarName = nativeField,
                     ReturnType = property.QualifiedType,
-                    ParameterIndex = paramIndex++
+                    ParameterIndex = paramIndex++,
+                    DeclarationScope = property
                 };
                 ctx.PushMarshalKind(MarshalKind.NativeField);
                 var marshal = new CLIMarshalNativeToManagedPrinter(ctx);
@@ -856,7 +861,8 @@ namespace CppSharp.Generators.CLI
                     Function = method,
                     Parameter = param,
                     ArgName = param.Name,
-                    ParameterIndex = paramIndex++
+                    ParameterIndex = paramIndex++,
+                    DeclarationScope = param.Namespace
                 };
 
                 var marshal = new CLIMarshalManagedToNativePrinter(ctx);
@@ -890,7 +896,8 @@ namespace CppSharp.Generators.CLI
                 var ctx = new MarshalContext(Context, CurrentIndentation)
                 {
                     ReturnVarName = varName,
-                    ReturnType = property.QualifiedType
+                    ReturnType = property.QualifiedType,
+                    DeclarationScope = property
                 };
 
                 var marshal = new CLIMarshalNativeToManagedPrinter(ctx);
@@ -965,7 +972,8 @@ namespace CppSharp.Generators.CLI
                 var param = new Parameter { Name = "(*this)", Namespace = function.Namespace };
                 var ctx = new MarshalContext(Context, CurrentIndentation)
                 {
-                    Parameter = param
+                    Parameter = param,
+                    DeclarationScope = param.Namespace
                 };
                 ctx.VarPrefix.Write(valueMarshalName);
 
@@ -1041,7 +1049,8 @@ namespace CppSharp.Generators.CLI
                 {
                     ArgName = nativeVarName,
                     ReturnVarName = nativeVarName,
-                    ReturnType = param.QualifiedType
+                    ReturnType = param.QualifiedType,
+                    DeclarationScope = param.Namespace
                 };
 
                 var marshal = new CLIMarshalNativeToManagedPrinter(ctx);
@@ -1074,7 +1083,8 @@ namespace CppSharp.Generators.CLI
                 {
                     ArgName = returnIdentifier,
                     ReturnVarName = returnIdentifier,
-                    ReturnType = retType
+                    ReturnType = retType,
+                    DeclarationScope = function
                 };
 
                 var marshal = new CLIMarshalNativeToManagedPrinter(ctx);
@@ -1192,7 +1202,8 @@ namespace CppSharp.Generators.CLI
                 Parameter = effectiveParam,
                 ParameterIndex = paramIndex,
                 ArgName = argName,
-                Function = function
+                Function = function,
+                DeclarationScope = param.Namespace
             };
 
             var marshal = new CLIMarshalManagedToNativePrinter(ctx);

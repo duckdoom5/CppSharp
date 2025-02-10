@@ -307,10 +307,13 @@ namespace CppSharp.Types.Std.CSharp
         {
             if (ctx.Kind == TypePrinterContextKind.Managed)
                 return new CILType(typeof(string));
+            
             var typePrinter = new CSharpTypePrinter(null);
             typePrinter.PushContext(TypePrinterContextKind.Native);
+            
             if (ctx.Type.Desugar().IsAddress())
                 return new CustomType(typePrinter.IntPtrType);
+            
             ClassTemplateSpecialization basicString = GetBasicString(ctx.Type);
             return new CustomType(basicString.Visit(typePrinter).Type);
         }
@@ -320,9 +323,10 @@ namespace CppSharp.Types.Std.CSharp
             Type type = ctx.Parameter.Type.Desugar();
             ClassTemplateSpecialization basicString = GetBasicString(type);
             var typePrinter = new CSharpTypePrinter(ctx.Context);
-            if (!ctx.Parameter.Type.Desugar().IsAddress() &&
-                ctx.MarshalKind != MarshalKind.NativeField)
+            
+            if (!type.IsAddress() && ctx.MarshalKind != MarshalKind.NativeField)
                 ctx.Return.Write($"*({typePrinter.PrintNative(basicString)}*) ");
+            
             string qualifiedBasicString = GetQualifiedBasicString(basicString);
             var assign = basicString.Methods.First(m => m.OriginalName == "assign");
             if (ctx.MarshalKind == MarshalKind.NativeField)
@@ -370,7 +374,9 @@ namespace CppSharp.Types.Std.CSharp
             string varBasicString = $"__basicStringRet{ctx.ParameterIndex}";
             bool usePointer = type.IsAddress() || ctx.MarshalKind == MarshalKind.NativeField ||
                 ctx.MarshalKind == MarshalKind.ReturnVariableArray;
+            
             ctx.Before.WriteLine($"var {varBasicString} = {basicString.Visit(typePrinter)}.{Helpers.CreateInstanceIdentifier}({(usePointer ? string.Empty : $"new {typePrinter.IntPtrType}(&")}{ctx.ReturnVarName}{(usePointer ? string.Empty : ")")});");
+            
             string @string = $"{qualifiedBasicString}Extensions.{data.Name}({varBasicString})";
             if (usePointer)
             {
@@ -558,6 +564,71 @@ namespace CppSharp.Types.Std.CSharp
         public override Type SignatureType(TypePrinterContext ctx)
         {
             return new CILType(typeof(System.IntPtr));
+        }
+    }
+
+    [TypeMap("std::vector", GeneratorKindID = GeneratorKind.CSharp_ID)]
+    public class Vector : TypeMap
+    {
+        public override bool IsIgnored
+        {
+            get
+            {
+                if (Type.GetPointee() is InjectedClassNameType)
+                    return true;
+
+                var finalType = Type.SkipPointerRefs();
+                if (finalType is TemplateSpecializationType tsType)
+                {
+                    var checker = new TypeIgnoreChecker(TypeMapDatabase);
+                    tsType.Arguments[0].Type.Visit(checker);
+
+                    return checker.IsIgnored;
+                }
+
+                return false;
+            }
+        }
+
+        public override Type SignatureType(TypePrinterContext ctx)
+        {
+            if (ctx.Kind == TypePrinterContextKind.Managed)
+                return new CustomType($"System.Collections.Generic.IEnumerable<{ctx.GetTemplateParameterList()}>");
+
+            var typePrinter = new CSharpTypePrinter(null);
+            typePrinter.PushContext(TypePrinterContextKind.Native);
+
+            var desugared = ctx.Type.Desugar();
+            if (desugared.IsAddress())
+                return new CustomType(typePrinter.IntPtrType);
+
+            ClassTemplateSpecialization vector = GetVector(desugared);
+            return new CustomType(vector.Visit(typePrinter).Type);
+        }
+
+        public override void MarshalToNative(MarshalContext ctx)
+        {
+            var propertyName = ctx.DeclarationScope.OriginalName;
+            ctx.Before.WriteLine($"Clear{propertyName}();");
+            ctx.Before.WriteLine($"foreach (var __x in {ctx.ArgName})");
+            ctx.Before.WriteLineIndent($"Add{propertyName}(__x);");
+        }
+
+        public override void MarshalToManaged(MarshalContext ctx)
+        {
+            var propertyName = ctx.DeclarationScope.OriginalName;
+            ctx.Before.WriteLine($"for (uint i = 0; i < {propertyName}Count; ++i)");
+            ctx.Before.WriteIndent("yield ");
+            ctx.Return.Write($"Get{propertyName}(i)");
+        }
+
+        private static ClassTemplateSpecialization GetVector(Type type)
+        {
+            var template = (type.GetFinalPointee() ?? type).Desugar();
+            var templateSpecializationType = template as TemplateSpecializationType;
+            if (templateSpecializationType != null)
+                return templateSpecializationType.GetClassTemplateSpecialization();
+            return (ClassTemplateSpecialization)((TagType)template).Declaration;
         }
     }
 }

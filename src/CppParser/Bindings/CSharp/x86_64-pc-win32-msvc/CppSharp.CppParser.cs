@@ -268,6 +268,38 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<string> Symbols
+                {
+                    get
+                    {
+                        for (uint i = 0; i < SymbolsCount; ++i)
+                            yield return GetSymbols(i);
+                    }
+
+                    set
+                    {
+                        ClearSymbols();
+                        foreach (var __x in value)
+                            AddSymbols(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<string> Dependencies
+                {
+                    get
+                    {
+                        for (uint i = 0; i < DependenciesCount; ++i)
+                            yield return GetDependencies(i);
+                    }
+
+                    set
+                    {
+                        ClearDependencies();
+                        foreach (var __x in value)
+                            AddDependencies(__x);
+                    }
+                }
+
                 public uint SymbolsCount
                 {
                     get
@@ -640,6 +672,22 @@ namespace CppSharp
                     __Internal.ClearBlocks(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.BlockContentComment> Blocks
+                {
+                    get
+                    {
+                        for (uint i = 0; i < BlocksCount; ++i)
+                            yield return GetBlocks(i);
+                    }
+
+                    set
+                    {
+                        ClearBlocks();
+                        foreach (var __x in value)
+                            AddBlocks(__x);
+                    }
+                }
+
                 public uint BlocksCount
                 {
                     get
@@ -898,6 +946,22 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->isWhitespace = (byte) (value ? 1 : 0);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.InlineContentComment> Content
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ContentCount; ++i)
+                            yield return GetContent(i);
+                    }
+
+                    set
+                    {
+                        ClearContent();
+                        foreach (var __x in value)
+                            AddContent(__x);
                     }
                 }
 
@@ -1222,6 +1286,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.BlockCommandComment.Argument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
+                    }
+                }
+
                 public uint ArgumentsCount
                 {
                     get
@@ -1499,6 +1579,22 @@ namespace CppSharp
                     __Internal.ClearPosition(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<uint> Position
+                {
+                    get
+                    {
+                        for (uint i = 0; i < PositionCount; ++i)
+                            yield return GetPosition(i);
+                    }
+
+                    set
+                    {
+                        ClearPosition();
+                        foreach (var __x in value)
+                            AddPosition(__x);
+                    }
+                }
+
                 public uint PositionCount
                 {
                     get
@@ -1752,6 +1848,22 @@ namespace CppSharp
                 public void ClearLines()
                 {
                     __Internal.ClearLines(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.VerbatimBlockLineComment> Lines
+                {
+                    get
+                    {
+                        for (uint i = 0; i < LinesCount; ++i)
+                            yield return GetLines(i);
+                    }
+
+                    set
+                    {
+                        ClearLines();
+                        foreach (var __x in value)
+                            AddLines(__x);
+                    }
                 }
 
                 public uint LinesCount
@@ -2182,6 +2294,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.InlineCommandComment.Argument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
+                    }
+                }
+
                 public uint ArgumentsCount
                 {
                     get
@@ -2579,6 +2707,22 @@ namespace CppSharp
                     set
                     {
                         global::Std.BasicStringExtensions.__Internal.Assign(new __IntPtr(&((__Internal*)__Instance)->tagName), value);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.HTMLStartTagComment.Attribute> Attributes
+                {
+                    get
+                    {
+                        for (uint i = 0; i < AttributesCount; ++i)
+                            yield return GetAttributes(i);
+                    }
+
+                    set
+                    {
+                        ClearAttributes();
+                        foreach (var __x in value)
+                            AddAttributes(__x);
                     }
                 }
 
@@ -4169,6 +4313,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Parameter> Parameters
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ParametersCount; ++i)
+                            yield return GetParameters(i);
+                    }
+
+                    set
+                    {
+                        ClearParameters();
+                        foreach (var __x in value)
+                            AddParameters(__x);
+                    }
+                }
+
                 public uint ParametersCount
                 {
                     get
@@ -5042,6 +5202,22 @@ namespace CppSharp
                     __Internal.ClearArguments(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TemplateArgument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
+                    }
+                }
+
                 public global::CppSharp.Parser.AST.Template Template
                 {
                     get
@@ -5210,6 +5386,22 @@ namespace CppSharp
                 public void ClearArguments()
                 {
                     __Internal.ClearArguments(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TemplateArgument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
+                    }
                 }
 
                 public global::CppSharp.Parser.AST.QualifiedType Desugared
@@ -6891,6 +7083,38 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.PreprocessedEntity> PreprocessedEntities
+                {
+                    get
+                    {
+                        for (uint i = 0; i < PreprocessedEntitiesCount; ++i)
+                            yield return GetPreprocessedEntities(i);
+                    }
+
+                    set
+                    {
+                        ClearPreprocessedEntities();
+                        foreach (var __x in value)
+                            AddPreprocessedEntities(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Declaration> Redeclarations
+                {
+                    get
+                    {
+                        for (uint i = 0; i < RedeclarationsCount; ++i)
+                            yield return GetRedeclarations(i);
+                    }
+
+                    set
+                    {
+                        ClearRedeclarations();
+                        foreach (var __x in value)
+                            AddRedeclarations(__x);
+                    }
+                }
+
                 public __IntPtr OriginalPtr
                 {
                     get
@@ -7365,6 +7589,150 @@ namespace CppSharp
                 public static implicit operator global::CppSharp.Parser.AST.DeclarationContext(global::CppSharp.Parser.AST.DeclarationKind kind)
                 {
                     return new global::CppSharp.Parser.AST.DeclarationContext(kind);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Namespace> Namespaces
+                {
+                    get
+                    {
+                        for (uint i = 0; i < NamespacesCount; ++i)
+                            yield return GetNamespaces(i);
+                    }
+
+                    set
+                    {
+                        ClearNamespaces();
+                        foreach (var __x in value)
+                            AddNamespaces(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Enumeration> Enums
+                {
+                    get
+                    {
+                        for (uint i = 0; i < EnumsCount; ++i)
+                            yield return GetEnums(i);
+                    }
+
+                    set
+                    {
+                        ClearEnums();
+                        foreach (var __x in value)
+                            AddEnums(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Function> Functions
+                {
+                    get
+                    {
+                        for (uint i = 0; i < FunctionsCount; ++i)
+                            yield return GetFunctions(i);
+                    }
+
+                    set
+                    {
+                        ClearFunctions();
+                        foreach (var __x in value)
+                            AddFunctions(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Class> Classes
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ClassesCount; ++i)
+                            yield return GetClasses(i);
+                    }
+
+                    set
+                    {
+                        ClearClasses();
+                        foreach (var __x in value)
+                            AddClasses(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Template> Templates
+                {
+                    get
+                    {
+                        for (uint i = 0; i < TemplatesCount; ++i)
+                            yield return GetTemplates(i);
+                    }
+
+                    set
+                    {
+                        ClearTemplates();
+                        foreach (var __x in value)
+                            AddTemplates(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TypedefDecl> Typedefs
+                {
+                    get
+                    {
+                        for (uint i = 0; i < TypedefsCount; ++i)
+                            yield return GetTypedefs(i);
+                    }
+
+                    set
+                    {
+                        ClearTypedefs();
+                        foreach (var __x in value)
+                            AddTypedefs(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TypeAlias> TypeAliases
+                {
+                    get
+                    {
+                        for (uint i = 0; i < TypeAliasesCount; ++i)
+                            yield return GetTypeAliases(i);
+                    }
+
+                    set
+                    {
+                        ClearTypeAliases();
+                        foreach (var __x in value)
+                            AddTypeAliases(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Variable> Variables
+                {
+                    get
+                    {
+                        for (uint i = 0; i < VariablesCount; ++i)
+                            yield return GetVariables(i);
+                    }
+
+                    set
+                    {
+                        ClearVariables();
+                        foreach (var __x in value)
+                            AddVariables(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Friend> Friends
+                {
+                    get
+                    {
+                        for (uint i = 0; i < FriendsCount; ++i)
+                            yield return GetFriends(i);
+                    }
+
+                    set
+                    {
+                        ClearFriends();
+                        foreach (var __x in value)
+                            AddFriends(__x);
+                    }
                 }
 
                 public bool IsAnonymous
@@ -8550,6 +8918,22 @@ namespace CppSharp
                     __Internal.ClearArguments(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.ExpressionObsolete> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
+                    }
+                }
+
                 public uint ArgumentsCount
                 {
                     get
@@ -8695,6 +9079,22 @@ namespace CppSharp
                 public void ClearArguments()
                 {
                     __Internal.ClearArguments(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.ExpressionObsolete> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
+                    }
                 }
 
                 public uint ArgumentsCount
@@ -9308,6 +9708,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Parameter> Parameters
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ParametersCount; ++i)
+                            yield return GetParameters(i);
+                    }
+
+                    set
+                    {
+                        ClearParameters();
+                        foreach (var __x in value)
+                            AddParameters(__x);
+                    }
+                }
+
                 public global::CppSharp.Parser.AST.FunctionTemplateSpecialization SpecializationInfo
                 {
                     get
@@ -9699,6 +10115,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Method> OverriddenMethods
+                {
+                    get
+                    {
+                        for (uint i = 0; i < OverriddenMethodsCount; ++i)
+                            yield return GetOverriddenMethods(i);
+                    }
+
+                    set
+                    {
+                        ClearOverriddenMethods();
+                        foreach (var __x in value)
+                            AddOverriddenMethods(__x);
+                    }
+                }
+
                 public uint OverriddenMethodsCount
                 {
                     get
@@ -10082,6 +10514,22 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->builtinType = value is null ? __IntPtr.Zero : value.__Instance;
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Enumeration.Item> Items
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ItemsCount; ++i)
+                            yield return GetItems(i);
+                    }
+
+                    set
+                    {
+                        ClearItems();
+                        foreach (var __x in value)
+                            AddItems(__x);
                     }
                 }
 
@@ -11041,6 +11489,22 @@ namespace CppSharp
                     __Internal.ClearComponents(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.VTableComponent> Components
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ComponentsCount; ++i)
+                            yield return GetComponents(i);
+                    }
+
+                    set
+                    {
+                        ClearComponents();
+                        foreach (var __x in value)
+                            AddComponents(__x);
+                    }
+                }
+
                 public uint ComponentsCount
                 {
                     get
@@ -11811,6 +12275,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.VFTableInfo> VFTables
+                {
+                    get
+                    {
+                        for (uint i = 0; i < VFTablesCount; ++i)
+                            yield return GetVFTables(i);
+                    }
+
+                    set
+                    {
+                        ClearVFTables();
+                        foreach (var __x in value)
+                            AddVFTables(__x);
+                    }
+                }
+
                 public global::CppSharp.Parser.AST.VTableLayout Layout
                 {
                     get
@@ -11888,6 +12368,38 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->dataSize = value;
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.LayoutField> Fields
+                {
+                    get
+                    {
+                        for (uint i = 0; i < FieldsCount; ++i)
+                            yield return GetFields(i);
+                    }
+
+                    set
+                    {
+                        ClearFields();
+                        foreach (var __x in value)
+                            AddFields(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.LayoutBase> Bases
+                {
+                    get
+                    {
+                        for (uint i = 0; i < BasesCount; ++i)
+                            yield return GetBases(i);
+                    }
+
+                    set
+                    {
+                        ClearBases();
+                        foreach (var __x in value)
+                            AddBases(__x);
                     }
                 }
 
@@ -12193,6 +12705,70 @@ namespace CppSharp
                 public void ClearSpecifiers()
                 {
                     __Internal.ClearSpecifiers(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.BaseClassSpecifier> Bases
+                {
+                    get
+                    {
+                        for (uint i = 0; i < BasesCount; ++i)
+                            yield return GetBases(i);
+                    }
+
+                    set
+                    {
+                        ClearBases();
+                        foreach (var __x in value)
+                            AddBases(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Field> Fields
+                {
+                    get
+                    {
+                        for (uint i = 0; i < FieldsCount; ++i)
+                            yield return GetFields(i);
+                    }
+
+                    set
+                    {
+                        ClearFields();
+                        foreach (var __x in value)
+                            AddFields(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Method> Methods
+                {
+                    get
+                    {
+                        for (uint i = 0; i < MethodsCount; ++i)
+                            yield return GetMethods(i);
+                    }
+
+                    set
+                    {
+                        ClearMethods();
+                        foreach (var __x in value)
+                            AddMethods(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.AccessSpecifierDecl> Specifiers
+                {
+                    get
+                    {
+                        for (uint i = 0; i < SpecifiersCount; ++i)
+                            yield return GetSpecifiers(i);
+                    }
+
+                    set
+                    {
+                        ClearSpecifiers();
+                        foreach (var __x in value)
+                            AddSpecifiers(__x);
+                    }
                 }
 
                 public bool IsPOD
@@ -12569,6 +13145,22 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->TemplatedDecl = value is null ? __IntPtr.Zero : value.__Instance;
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Declaration> Parameters
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ParametersCount; ++i)
+                            yield return GetParameters(i);
+                    }
+
+                    set
+                    {
+                        ClearParameters();
+                        foreach (var __x in value)
+                            AddParameters(__x);
                     }
                 }
 
@@ -13571,6 +14163,22 @@ namespace CppSharp
                     return __result0;
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.ClassTemplateSpecialization> Specializations
+                {
+                    get
+                    {
+                        for (uint i = 0; i < SpecializationsCount; ++i)
+                            yield return GetSpecializations(i);
+                    }
+
+                    set
+                    {
+                        ClearSpecializations();
+                        foreach (var __x in value)
+                            AddSpecializations(__x);
+                    }
+                }
+
                 public uint SpecializationsCount
                 {
                     get
@@ -13771,6 +14379,22 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->templatedDecl = value is null ? __IntPtr.Zero : value.__Instance;
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TemplateArgument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
                     }
                 }
 
@@ -13978,6 +14602,22 @@ namespace CppSharp
                     __Internal.ClearParameters(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Declaration> Parameters
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ParametersCount; ++i)
+                            yield return GetParameters(i);
+                    }
+
+                    set
+                    {
+                        ClearParameters();
+                        foreach (var __x in value)
+                            AddParameters(__x);
+                    }
+                }
+
                 public uint ParametersCount
                 {
                     get
@@ -14155,6 +14795,22 @@ namespace CppSharp
                     return __result0;
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.FunctionTemplateSpecialization> Specializations
+                {
+                    get
+                    {
+                        for (uint i = 0; i < SpecializationsCount; ++i)
+                            yield return GetSpecializations(i);
+                    }
+
+                    set
+                    {
+                        ClearSpecializations();
+                        foreach (var __x in value)
+                            AddSpecializations(__x);
+                    }
+                }
+
                 public uint SpecializationsCount
                 {
                     get
@@ -14330,6 +14986,22 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->_template = value is null ? __IntPtr.Zero : value.__Instance;
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TemplateArgument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
                     }
                 }
 
@@ -14551,6 +15223,22 @@ namespace CppSharp
                     return __result0;
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.VarTemplateSpecialization> Specializations
+                {
+                    get
+                    {
+                        for (uint i = 0; i < SpecializationsCount; ++i)
+                            yield return GetSpecializations(i);
+                    }
+
+                    set
+                    {
+                        ClearSpecializations();
+                        foreach (var __x in value)
+                            AddSpecializations(__x);
+                    }
+                }
+
                 public uint SpecializationsCount
                 {
                     get
@@ -14728,6 +15416,22 @@ namespace CppSharp
                     set
                     {
                         ((__Internal*)__Instance)->templatedDecl = value is null ? __IntPtr.Zero : value.__Instance;
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TemplateArgument> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < ArgumentsCount; ++i)
+                            yield return GetArguments(i);
+                    }
+
+                    set
+                    {
+                        ClearArguments();
+                        foreach (var __x in value)
+                            AddArguments(__x);
                     }
                 }
 
@@ -15788,6 +16492,22 @@ namespace CppSharp
                     }
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.MacroDefinition> Macros
+                {
+                    get
+                    {
+                        for (uint i = 0; i < MacrosCount; ++i)
+                            yield return GetMacros(i);
+                    }
+
+                    set
+                    {
+                        ClearMacros();
+                        foreach (var __x in value)
+                            AddMacros(__x);
+                    }
+                }
+
                 public uint MacrosCount
                 {
                     get
@@ -15962,6 +16682,22 @@ namespace CppSharp
                 public void ClearTranslationUnits()
                 {
                     __Internal.ClearTranslationUnits(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.TranslationUnit> TranslationUnits
+                {
+                    get
+                    {
+                        for (uint i = 0; i < TranslationUnitsCount; ++i)
+                            yield return GetTranslationUnits(i);
+                    }
+
+                    set
+                    {
+                        ClearTranslationUnits();
+                        foreach (var __x in value)
+                            AddTranslationUnits(__x);
+                    }
                 }
 
                 public uint TranslationUnitsCount
@@ -16472,6 +17208,22 @@ namespace CppSharp
                     __Internal.Cleardecls(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Declaration> Decls
+                {
+                    get
+                    {
+                        for (uint i = 0; i < declsCount; ++i)
+                            yield return Getdecls(i);
+                    }
+
+                    set
+                    {
+                        Cleardecls();
+                        foreach (var __x in value)
+                            Adddecls(__x);
+                    }
+                }
+
                 public bool IsSingleDecl
                 {
                     get
@@ -16738,6 +17490,22 @@ namespace CppSharp
                 public void Clearbody()
                 {
                     __Internal.Clearbody(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Stmt> Body
+                {
+                    get
+                    {
+                        for (uint i = 0; i < bodyCount; ++i)
+                            yield return Getbody(i);
+                    }
+
+                    set
+                    {
+                        Clearbody();
+                        foreach (var __x in value)
+                            Addbody(__x);
+                    }
                 }
 
                 public bool BodyEmpty
@@ -19357,6 +20125,38 @@ namespace CppSharp
                     return new global::CppSharp.Parser.AST.AsmStmt(klass);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> Inputs
+                {
+                    get
+                    {
+                        for (uint i = 0; i < inputsCount; ++i)
+                            yield return Getinputs(i);
+                    }
+
+                    set
+                    {
+                        Clearinputs();
+                        foreach (var __x in value)
+                            Addinputs(__x);
+                    }
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> Outputs
+                {
+                    get
+                    {
+                        for (uint i = 0; i < outputsCount; ++i)
+                            yield return Getoutputs(i);
+                    }
+
+                    set
+                    {
+                        Clearoutputs();
+                        foreach (var __x in value)
+                            Addoutputs(__x);
+                    }
+                }
+
                 public global::CppSharp.Parser.SourceLocation AsmLoc
                 {
                     get
@@ -19806,6 +20606,22 @@ namespace CppSharp
                 public void Clearlabels()
                 {
                     __Internal.Clearlabels(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.AddrLabelExpr> Labels
+                {
+                    get
+                    {
+                        for (uint i = 0; i < labelsCount; ++i)
+                            yield return Getlabels(i);
+                    }
+
+                    set
+                    {
+                        Clearlabels();
+                        foreach (var __x in value)
+                            Addlabels(__x);
+                    }
                 }
 
                 public global::CppSharp.Parser.SourceLocation RParenLoc
@@ -20858,6 +21674,22 @@ namespace CppSharp
                     __Internal.ClearcaptureInits(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> CaptureInits
+                {
+                    get
+                    {
+                        for (uint i = 0; i < capture_initsCount; ++i)
+                            yield return Getcapture_inits(i);
+                    }
+
+                    set
+                    {
+                        Clearcapture_inits();
+                        foreach (var __x in value)
+                            Addcapture_inits(__x);
+                    }
+                }
+
                 public uint CaptureSize
                 {
                     get
@@ -21758,6 +22590,22 @@ namespace CppSharp
                 public void ClearchildrenExclBody()
                 {
                     __Internal.ClearchildrenExclBody(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Stmt> ChildrenExclBody
+                {
+                    get
+                    {
+                        for (uint i = 0; i < childrenExclBodyCount; ++i)
+                            yield return GetchildrenExclBody(i);
+                    }
+
+                    set
+                    {
+                        ClearchildrenExclBody();
+                        foreach (var __x in value)
+                            AddchildrenExclBody(__x);
+                    }
                 }
 
                 public bool HasDependentPromiseType
@@ -26470,6 +27318,22 @@ namespace CppSharp
                 public static implicit operator global::CppSharp.Parser.AST.CallExpr(global::CppSharp.Parser.AST.StmtClass klass)
                 {
                     return new global::CppSharp.Parser.AST.CallExpr(klass);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < argumentsCount; ++i)
+                            yield return Getarguments(i);
+                    }
+
+                    set
+                    {
+                        Cleararguments();
+                        foreach (var __x in value)
+                            Addarguments(__x);
+                    }
                 }
 
                 public global::CppSharp.Parser.AST.Expr Callee
@@ -36464,6 +37328,22 @@ namespace CppSharp
                     return new global::CppSharp.Parser.AST.CXXConstructExpr(klass);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < argumentsCount; ++i)
+                            yield return Getarguments(i);
+                    }
+
+                    set
+                    {
+                        Cleararguments();
+                        foreach (var __x in value)
+                            Addarguments(__x);
+                    }
+                }
+
                 public global::CppSharp.Parser.SourceLocation Location
                 {
                     get
@@ -37163,6 +38043,22 @@ namespace CppSharp
                     __Internal.ClearcaptureInits(__Instance);
                 }
 
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> CaptureInits
+                {
+                    get
+                    {
+                        for (uint i = 0; i < capture_initsCount; ++i)
+                            yield return Getcapture_inits(i);
+                    }
+
+                    set
+                    {
+                        Clearcapture_inits();
+                        foreach (var __x in value)
+                            Addcapture_inits(__x);
+                    }
+                }
+
                 public global::CppSharp.Parser.SourceLocation CaptureDefaultLoc
                 {
                     get
@@ -37602,6 +38498,22 @@ namespace CppSharp
                 public void ClearplacementArguments()
                 {
                     __Internal.ClearplacementArguments(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> PlacementArguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < placement_argumentsCount; ++i)
+                            yield return Getplacement_arguments(i);
+                    }
+
+                    set
+                    {
+                        Clearplacement_arguments();
+                        foreach (var __x in value)
+                            Addplacement_arguments(__x);
+                    }
                 }
 
                 public global::CppSharp.Parser.AST.QualifiedType AllocatedType
@@ -39499,6 +40411,22 @@ namespace CppSharp
                 public void Cleararguments()
                 {
                     __Internal.Cleararguments(__Instance);
+                }
+
+                public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.Expr> Arguments
+                {
+                    get
+                    {
+                        for (uint i = 0; i < argumentsCount; ++i)
+                            yield return Getarguments(i);
+                    }
+
+                    set
+                    {
+                        Cleararguments();
+                        foreach (var __x in value)
+                            Addarguments(__x);
+                    }
                 }
 
                 public global::CppSharp.Parser.AST.QualifiedType TypeAsWritten
@@ -43433,6 +44361,150 @@ namespace CppSharp
                 __Internal.ClearSupportedFunctionTemplates(__Instance);
             }
 
+            public System.Collections.Generic.IEnumerable<string> Arguments
+            {
+                get
+                {
+                    for (uint i = 0; i < ArgumentsCount; ++i)
+                        yield return GetArguments(i);
+                }
+
+                set
+                {
+                    ClearArguments();
+                    foreach (var __x in value)
+                        AddArguments(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> CompilationOptions
+            {
+                get
+                {
+                    for (uint i = 0; i < CompilationOptionsCount; ++i)
+                        yield return GetCompilationOptions(i);
+                }
+
+                set
+                {
+                    ClearCompilationOptions();
+                    foreach (var __x in value)
+                        AddCompilationOptions(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> SourceFiles
+            {
+                get
+                {
+                    for (uint i = 0; i < SourceFilesCount; ++i)
+                        yield return GetSourceFiles(i);
+                }
+
+                set
+                {
+                    ClearSourceFiles();
+                    foreach (var __x in value)
+                        AddSourceFiles(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> IncludeDirs
+            {
+                get
+                {
+                    for (uint i = 0; i < IncludeDirsCount; ++i)
+                        yield return GetIncludeDirs(i);
+                }
+
+                set
+                {
+                    ClearIncludeDirs();
+                    foreach (var __x in value)
+                        AddIncludeDirs(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> SystemIncludeDirs
+            {
+                get
+                {
+                    for (uint i = 0; i < SystemIncludeDirsCount; ++i)
+                        yield return GetSystemIncludeDirs(i);
+                }
+
+                set
+                {
+                    ClearSystemIncludeDirs();
+                    foreach (var __x in value)
+                        AddSystemIncludeDirs(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> Defines
+            {
+                get
+                {
+                    for (uint i = 0; i < DefinesCount; ++i)
+                        yield return GetDefines(i);
+                }
+
+                set
+                {
+                    ClearDefines();
+                    foreach (var __x in value)
+                        AddDefines(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> Undefines
+            {
+                get
+                {
+                    for (uint i = 0; i < UndefinesCount; ++i)
+                        yield return GetUndefines(i);
+                }
+
+                set
+                {
+                    ClearUndefines();
+                    foreach (var __x in value)
+                        AddUndefines(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> SupportedStdTypes
+            {
+                get
+                {
+                    for (uint i = 0; i < SupportedStdTypesCount; ++i)
+                        yield return GetSupportedStdTypes(i);
+                }
+
+                set
+                {
+                    ClearSupportedStdTypes();
+                    foreach (var __x in value)
+                        AddSupportedStdTypes(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> SupportedFunctionTemplates
+            {
+                get
+                {
+                    for (uint i = 0; i < SupportedFunctionTemplatesCount; ++i)
+                        yield return GetSupportedFunctionTemplates(i);
+                }
+
+                set
+                {
+                    ClearSupportedFunctionTemplates();
+                    foreach (var __x in value)
+                        AddSupportedFunctionTemplates(__x);
+                }
+            }
+
             public global::CppSharp.Parser.AST.ASTContext ASTContext
             {
                 get
@@ -43878,6 +44950,54 @@ namespace CppSharp
                 __Internal.ClearLibraries(__Instance);
             }
 
+            public System.Collections.Generic.IEnumerable<string> Arguments
+            {
+                get
+                {
+                    for (uint i = 0; i < ArgumentsCount; ++i)
+                        yield return GetArguments(i);
+                }
+
+                set
+                {
+                    ClearArguments();
+                    foreach (var __x in value)
+                        AddArguments(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> LibraryDirs
+            {
+                get
+                {
+                    for (uint i = 0; i < LibraryDirsCount; ++i)
+                        yield return GetLibraryDirs(i);
+                }
+
+                set
+                {
+                    ClearLibraryDirs();
+                    foreach (var __x in value)
+                        AddLibraryDirs(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<string> Libraries
+            {
+                get
+                {
+                    for (uint i = 0; i < LibrariesCount; ++i)
+                        yield return GetLibraries(i);
+                }
+
+                set
+                {
+                    ClearLibraries();
+                    foreach (var __x in value)
+                        AddLibraries(__x);
+                }
+            }
+
             public uint ArgumentsCount
             {
                 get
@@ -44296,6 +45416,38 @@ namespace CppSharp
                 set
                 {
                     ((__Internal*)__Instance)->kind = value;
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.ParserDiagnostic> Diagnostics
+            {
+                get
+                {
+                    for (uint i = 0; i < DiagnosticsCount; ++i)
+                        yield return GetDiagnostics(i);
+                }
+
+                set
+                {
+                    ClearDiagnostics();
+                    foreach (var __x in value)
+                        AddDiagnostics(__x);
+                }
+            }
+
+            public System.Collections.Generic.IEnumerable<global::CppSharp.Parser.AST.NativeLibrary> Libraries
+            {
+                get
+                {
+                    for (uint i = 0; i < LibrariesCount; ++i)
+                        yield return GetLibraries(i);
+                }
+
+                set
+                {
+                    ClearLibraries();
+                    foreach (var __x in value)
+                        AddLibraries(__x);
                 }
             }
 

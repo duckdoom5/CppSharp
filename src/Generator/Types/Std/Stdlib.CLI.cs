@@ -129,16 +129,22 @@ namespace CppSharp.Types.Std.CLI
         {
             get
             {
-                var finalType = Type.GetFinalPointee() ?? Type;
-                if (finalType is not TemplateSpecializationType type)
-                {
-                    var injectedClassNameType = (InjectedClassNameType)finalType;
-                    type = (TemplateSpecializationType)injectedClassNameType.InjectedSpecializationType.Type;
-                }
-                var checker = new TypeIgnoreChecker(TypeMapDatabase);
-                type.Arguments[0].Type.Visit(checker);
+                var finalType = Type.SkipPointerRefs();
 
-                return checker.IsIgnored;
+                if (finalType is InjectedClassNameType injectedClassNameType)
+                {
+                    finalType = injectedClassNameType.InjectedSpecializationType.Type;
+                }
+
+                if (finalType is TemplateSpecializationType tsType)
+                {
+                    var checker = new TypeIgnoreChecker(TypeMapDatabase);
+                    tsType.Arguments[0].Type.Visit(checker);
+
+                    return checker.IsIgnored;
+                }
+
+                return false;
             }
         }
 
@@ -177,6 +183,7 @@ namespace CppSharp.Types.Std.CLI
             {
                 Parameter = param,
                 ArgName = param.Name,
+                DeclarationScope = ctx.DeclarationScope
             };
 
             var marshal = new CLIMarshalManagedToNativePrinter(elementCtx);
@@ -210,7 +217,8 @@ namespace CppSharp.Types.Std.CLI
             var elementCtx = new MarshalContext(ctx.Context, ctx.Indentation)
             {
                 ReturnVarName = ctx.ReturnVarName + ".value()",
-                ReturnType = type
+                ReturnType = type,
+                DeclarationScope = ctx.DeclarationScope
             };
 
             var marshal = new CLIMarshalNativeToManagedPrinter(elementCtx);
@@ -233,24 +241,25 @@ namespace CppSharp.Types.Std.CLI
         {
             get
             {
-                var finalType = Type.GetFinalPointee() ?? Type;
-                var type = finalType as TemplateSpecializationType;
-                if (type == null)
-                {
-                    var injectedClassNameType = (InjectedClassNameType)finalType;
-                    type = (TemplateSpecializationType)injectedClassNameType.InjectedSpecializationType.Type;
-                }
-                var checker = new TypeIgnoreChecker(TypeMapDatabase);
-                type.Arguments[0].Type.Visit(checker);
+                if (Type.GetPointee() is InjectedClassNameType)
+                    return true;
 
-                return checker.IsIgnored;
+                var finalType = Type.SkipPointerRefs();
+                if (finalType is TemplateSpecializationType type)
+                {
+                    var checker = new TypeIgnoreChecker(TypeMapDatabase);
+                    type.Arguments[0].Type.Visit(checker);
+
+                    return checker.IsIgnored;
+                }
+
+                return false;
             }
         }
 
         public override Type SignatureType(TypePrinterContext ctx)
         {
-            return new CustomType(
-                $"::System::Collections::Generic::List<{ctx.GetTemplateParameterList()}>^");
+            return new CustomType($"System::Collections::Generic::List<{ctx.GetTemplateParameterList()}>^");
         }
 
         public override void MarshalToNative(MarshalContext ctx)
@@ -286,6 +295,7 @@ namespace CppSharp.Types.Std.CLI
                 {
                     Parameter = param,
                     ArgName = param.Name,
+                    DeclarationScope = ctx.DeclarationScope
                 };
 
                 var marshal = new CLIMarshalManagedToNativePrinter(elementCtx);
@@ -334,7 +344,8 @@ namespace CppSharp.Types.Std.CLI
                 var elementCtx = new MarshalContext(ctx.Context, ctx.Indentation)
                 {
                     ReturnVarName = "_element",
-                    ReturnType = type
+                    ReturnType = type,
+                    DeclarationScope = ctx.DeclarationScope
                 };
 
                 var marshal = new CLIMarshalNativeToManagedPrinter(elementCtx);

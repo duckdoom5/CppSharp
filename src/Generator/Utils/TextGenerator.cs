@@ -69,6 +69,12 @@ namespace CppSharp
             NewLine();
         }
 
+        public void WriteIndent(string msg, params object[] args)
+        {
+            Indent();
+            Write(msg, args);
+        }
+
         public void WriteLineIndent(string msg, params object[] args)
         {
             Indent();

@@ -1041,14 +1041,16 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             var param = new Parameter
             {
                 Name = "value",
-                QualifiedType = field.QualifiedType
+                QualifiedType = field.QualifiedType,
+                Namespace = field.Namespace
             };
 
             var ctx = new CSharpMarshalContext(Context, CurrentIndentation)
             {
                 Parameter = param,
                 ArgName = param.Name,
-                ReturnVarName = returnVar
+                ReturnVarName = returnVar,
+                DeclarationScope = field
             };
             ctx.PushMarshalKind(MarshalKind.NativeField);
 
@@ -1410,7 +1412,8 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             {
                 ArgName = field.Name,
                 ReturnVarName = returnVar,
-                ReturnType = returnType
+                ReturnType = returnType,
+                DeclarationScope = field,
             };
             ctx.PushMarshalKind(MarshalKind.NativeField);
 

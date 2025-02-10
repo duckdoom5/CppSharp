@@ -437,7 +437,8 @@ namespace CppSharp.Generators.Cpp
                         ArgName = param.Name,
                         ReturnVarName = param.Name,
                         ReturnType = param.QualifiedType,
-                        Parameter = param
+                        Parameter = param,
+                        DeclarationScope = param.Namespace
                     };
 
                     var marshal = GetMarshalNativeToManagedPrinter(ctx);
@@ -672,7 +673,8 @@ namespace CppSharp.Generators.Cpp
                     var ctx = new MarshalContext(Context, CurrentIndentation)
                     {
                         ArgName = @enum.GetItemValueAsString(item),
-                        ReturnVarName = "item"
+                        ReturnVarName = "item",
+                        DeclarationScope = @enum
                     };
 
                     var marshal = GetMarshalNativeToManagedPrinter(ctx);

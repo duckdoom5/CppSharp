@@ -35,6 +35,7 @@ namespace CppSharp.Passes
                 NewLine();
                 WriteLine("#include <string>");
                 WriteLine("#include <optional>");
+                WriteLine("#include <vector>");
             }
             else
                 foreach (var header in TranslationUnit.Module.Headers)

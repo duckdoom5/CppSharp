@@ -538,7 +538,8 @@ namespace CppSharp.Generators.Cpp
                 {
                     ArgName = nativeVarName,
                     ReturnVarName = nativeVarName,
-                    ReturnType = param.QualifiedType
+                    ReturnType = param.QualifiedType,
+                    DeclarationScope = param.Namespace
                 };
 
                 var marshal = new CppMarshalNativeToManagedPrinter(ctx);
@@ -562,7 +563,8 @@ namespace CppSharp.Generators.Cpp
             {
                 ArgName = Helpers.ReturnIdentifier,
                 ReturnVarName = Helpers.ReturnIdentifier,
-                ReturnType = function.ReturnType
+                ReturnType = function.ReturnType,
+                DeclarationScope = function
             };
 
             var marshal = new CppMarshalNativeToManagedPrinter(ctx);
@@ -631,7 +633,8 @@ namespace CppSharp.Generators.Cpp
                 Parameter = effectiveParam,
                 ParameterIndex = paramIndex,
                 ArgName = argName,
-                Function = function
+                Function = function,
+                DeclarationScope = effectiveParam.Namespace
             };
 
             var marshal = new CppMarshalManagedToNativePrinter(ctx);

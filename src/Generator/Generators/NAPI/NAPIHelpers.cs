@@ -163,7 +163,8 @@ namespace CppSharp.Generators.Cpp
                 Parameter = effectiveParam,
                 ParameterIndex = paramIndex,
                 ArgName = typeArgName,
-                Function = function
+                Function = function,
+                DeclarationScope = function,
             };
 
             paramMarshal.Context = ctx;
@@ -213,7 +214,8 @@ namespace CppSharp.Generators.Cpp
             {
                 ArgName = Helpers.ReturnIdentifier,
                 ReturnVarName = Helpers.ReturnIdentifier,
-                ReturnType = function.ReturnType
+                ReturnType = function.ReturnType,
+                DeclarationScope = function
             };
 
             // TODO: Move this into the marshaler
@@ -251,7 +253,8 @@ namespace CppSharp.Generators.Cpp
                     {
                         ArgName = paramInfo.Name,
                         ReturnVarName = paramInfo.Name,
-                        ReturnType = param.QualifiedType
+                        ReturnType = param.QualifiedType,
+                        DeclarationScope = param.Namespace
                     };
 
                     var marshal = GetMarshalNativeToManagedPrinter(ctx);

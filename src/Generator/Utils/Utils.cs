@@ -86,6 +86,42 @@ namespace CppSharp
             while (stringBuilder.Length > 0 && stringBuilder[^1] == '_')
                 stringBuilder.Remove(stringBuilder.Length - 1, 1);
         }
+
+        /// <summary>
+        /// Appends a character to the string builder if it is not already the last character.
+        /// Note: Empty strings are not appended to.
+        /// </summary>
+        public static void AppendIfNeeded(this StringBuilder self, char toAppend)
+        {
+            if (self.Length == 0)
+                return;
+
+            if (self[^1] != toAppend)
+                self.Append(toAppend);
+        }
+
+        public static StringBuilder AppendJoinIfNeeded(this StringBuilder self, char separator, params string[] values)
+        {
+            return AppendJoinIfNeededCore(self, separator, values);
+        }
+        
+        public static StringBuilder AppendJoinIfNeeded(this StringBuilder self, char separator, params object[] values)
+        {
+            return AppendJoinIfNeededCore(self, separator, values);
+        }
+
+        private static StringBuilder AppendJoinIfNeededCore(this StringBuilder self, char separator, ReadOnlySpan<object> values)
+        {
+            if (values.IsEmpty)
+                return self;
+            
+            for (int i = 0; i < values.Length; i++)
+            {
+                self.AppendIfNeeded(separator);
+                self.Append(values[i]!);
+            }
+            return self;
+        }
     }
 
     public static class LinqHelpers

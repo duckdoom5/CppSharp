@@ -808,6 +808,6 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
             names.Push(name ?? ctx.Name);
         }
 
-        private CSharpExpressionPrinter expressionPrinter => new CSharpExpressionPrinter(this);
+        private ExpressionPrinter expressionPrinter => new ExpressionPrinter(this);
     }
 }

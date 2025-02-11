@@ -3,19 +3,19 @@ using CppSharp.AST;
 using CppSharp.AST.Extensions;
 using Type = CppSharp.AST.Type;
 
-namespace CppSharp.Generators.CSharp
+namespace CppSharp.Generators
 {
     public static class CSharpExpressionPrinterExtensions
     {
-        public static string CSharpValue(this ExpressionObsolete value, CSharpExpressionPrinter printer)
+        public static string CSharpValue(this ExpressionObsolete value, ExpressionPrinter printer)
         {
             return value.Visit(printer);
         }
     }
 
-    public class CSharpExpressionPrinter : IExpressionPrinter<string>
+    public class ExpressionPrinter : IExpressionPrinter<string>
     {
-        public CSharpExpressionPrinter(TypePrinter typePrinter)
+        public ExpressionPrinter(TypePrinter typePrinter)
         {
             this.typePrinter = typePrinter;
         }
@@ -30,8 +30,7 @@ namespace CppSharp.Generators.CSharp
                 return $"({desugared.Visit(typePrinter)}) ({expression})";
             var finalType = (desugared.GetFinalPointee() ?? desugared).Desugar();
             if (finalType.TryGetClass(out var @class) && @class.IsInterface)
-                return $@"({@class.Visit(typePrinter)}) ({
-                    @class.OriginalClass.Visit(typePrinter)}) ({expression})";
+                return $@"({@class.Visit(typePrinter)}) ({@class.OriginalClass.Visit(typePrinter)}) ({expression})";
             return expression;
         }
 
@@ -55,7 +54,7 @@ namespace CppSharp.Generators.CSharp
                             return expr.String;
                     }
                 case StatementClass.DeclarationReference:
-                    if (expr.Declaration is Variable || expr.Declaration is Enumeration.Item)
+                    if (expr.Declaration is Variable or Enumeration.Item)
                         return expr.Declaration.Visit(typePrinter).Type;
                     goto default;
                 case StatementClass.BinaryOperator:
@@ -71,6 +70,10 @@ namespace CppSharp.Generators.CSharp
                         constructorExpr.Arguments[0].Class != StatementClass.Any)
                         return VisitExpression(constructorExpr.Arguments[0]);
                     goto default;
+                case StatementClass.Any:
+                case StatementClass.CXXOperatorCall:
+                case StatementClass.ImplicitCast:
+                case StatementClass.ExplicitCast:
                 default:
                     return expr.String;
             }

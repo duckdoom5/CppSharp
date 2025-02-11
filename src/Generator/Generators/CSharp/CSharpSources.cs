@@ -20,7 +20,7 @@ namespace CppSharp.Generators.CSharp
     public class CSharpSources : CodeGenerator
     {
         public CSharpTypePrinter TypePrinter { get; set; }
-        public CSharpExpressionPrinter ExpressionPrinter { get; protected set; }
+        public ExpressionPrinter ExpressionPrinter { get; protected set; }
 
         internal Dictionary<string, CSharpLibrarySymbolTable> LibrarySymbolTables { get; } = new();
 
@@ -41,7 +41,7 @@ namespace CppSharp.Generators.CSharp
         private void Init()
         {
             TypePrinter = new CSharpTypePrinter(Context);
-            ExpressionPrinter = new CSharpExpressionPrinter(TypePrinter);
+            ExpressionPrinter = new ExpressionPrinter(TypePrinter);
         }
 
         #region Identifiers

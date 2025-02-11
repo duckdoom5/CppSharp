@@ -4,14 +4,12 @@
     {
         public static bool IsPrimitiveType(this Type t)
         {
-            PrimitiveType type;
-            return t.IsPrimitiveType(out type);
+            return t.IsPrimitiveType(out PrimitiveType _);
         }
 
         public static bool IsPrimitiveType(this Type t, out PrimitiveType primitive)
         {
-            var builtin = t.Desugar() as BuiltinType;
-            if (builtin != null)
+            if (t.Desugar() is BuiltinType builtin)
             {
                 primitive = builtin.Type;
                 return true;
@@ -32,9 +30,7 @@
 
         public static bool IsEnumType(this Type t)
         {
-            var tag = t.Desugar() as TagType;
-
-            if (tag == null)
+            if (t.Desugar() is not TagType tag)
                 return false;
 
             return tag.Declaration is Enumeration;
@@ -47,36 +43,28 @@
 
         public static bool IsPointer(this Type t)
         {
-            var functionPointer = t as MemberPointerType;
-            if (functionPointer != null)
+            if (t is MemberPointerType)
                 return true;
-            var pointer = t as PointerType;
-            if (pointer == null)
+
+            if (t is not PointerType pointer)
                 return false;
+
             return pointer.Modifier == PointerType.TypeModifier.Pointer;
         }
 
         public static bool IsReference(this Type t)
         {
-            var pointer = t as PointerType;
-            if (pointer == null)
-                return false;
-            return pointer.IsReference;
+            return t is PointerType { IsReference: true };
         }
 
         public static bool IsPointerToPrimitiveType(this Type t)
         {
-            var ptr = t as PointerType;
-            if (ptr == null)
-                return false;
-            PrimitiveType primitiveType;
-            return ptr.Pointee.IsPrimitiveType(out primitiveType);
+            return t is PointerType ptr && ptr.Pointee.IsPrimitiveType(out _);
         }
 
         public static bool IsPointerToPrimitiveType(this Type t, out PrimitiveType primitive)
         {
-            var ptr = t as PointerType;
-            if (ptr == null)
+            if (t is not PointerType ptr)
             {
                 primitive = PrimitiveType.Null;
                 return false;
@@ -86,24 +74,21 @@
 
         public static bool IsPointerToPrimitiveType(this Type t, PrimitiveType primitive)
         {
-            var ptr = t as PointerType;
-            if (ptr == null)
+            if (t is not PointerType ptr)
                 return false;
             return ptr.Pointee.IsPrimitiveType(primitive);
         }
 
         public static bool IsPointerToEnum(this Type t)
         {
-            var ptr = t as PointerType;
-            if (ptr == null)
+            if (t is not PointerType ptr)
                 return false;
             return ptr.Pointee.IsEnumType();
         }
 
         public static bool IsPointerToEnum(this Type t, out Enumeration @enum)
         {
-            var ptr = t as PointerType;
-            if (ptr == null)
+            if (t is not PointerType ptr)
             {
                 @enum = null;
                 return false;
@@ -113,21 +98,18 @@
 
         public static bool IsPointerTo<T>(this Type t, out T type) where T : Type
         {
-            var pointee = t.GetPointee();
-            type = pointee as T;
-            if (type == null)
-            {
-                var attributedType = pointee as AttributedType;
-                if (attributedType != null)
-                    type = attributedType.Modified.Type as T;
-            }
+            type = t.GetPointee() as T;
+            if (type != null) 
+                return true;
+
+            if (type is AttributedType attributedType)
+                type = attributedType.Modified.Type as T;
             return type != null;
         }
 
         public static bool IsClass(this Type t)
         {
-            Class @class;
-            return t.TryGetClass(out @class);
+            return t.TryGetClass(out _);
         }
 
         public static bool TryGetClass(this Type t, out Class @class, Class value = null)
@@ -135,11 +117,12 @@
             return TryGetDeclaration(t, out @class, value);
         }
 
-        public static bool TryGetDeclaration<T>(this Type t, out T decl, T value = null) where T : Declaration
+        public static bool TryGetDeclaration<T>(this Type t, out T decl, T value = null)
+            where T : Declaration
         {
             t = t.Desugar();
 
-            TagType tagType = null;
+            TagType tagType;
             if (t is TemplateSpecializationType type)
             {
                 if (type.IsDependent)
@@ -193,15 +176,12 @@
 
         public static bool IsEnum(this Type t)
         {
-            Enumeration @enum;
-            return t.TryGetEnum(out @enum);
+            return t.TryGetEnum(out _);
         }
 
         public static bool TryGetEnum(this Type t, out Enumeration @enum)
         {
-            var tag = t.Desugar() as TagType;
-
-            if (tag == null)
+            if (t.Desugar() is not TagType tag)
             {
                 @enum = null;
                 return false;
@@ -213,54 +193,89 @@
 
         public static Type Desugar(this Type t, bool resolveTemplateSubstitution = true)
         {
-            var typeDef = t as TypedefType;
-            if (typeDef != null)
+            while (true)
             {
-                var decl = typeDef.Declaration.Type;
-                if (decl != null)
-                    return decl.Desugar(resolveTemplateSubstitution);
-            }
-
-            if (resolveTemplateSubstitution)
-            {
-                var substType = t as TemplateParameterSubstitutionType;
-                if (substType != null)
+                switch (t)
                 {
-                    var replacement = substType.Replacement.Type;
-                    if (replacement != null)
-                        return replacement.Desugar(resolveTemplateSubstitution);
+                    case TypedefType { Declaration.Type: not null } typeDef:
+                        t = typeDef.Declaration.Type;
+                        continue;
+                    case TemplateParameterSubstitutionType { Replacement.Type: not null } substType when resolveTemplateSubstitution:
+                        t = substType.Replacement.Type;
+                        continue;
+                    case InjectedClassNameType { InjectedSpecializationType.Type: not null } injectedType:
+                        t = injectedType.InjectedSpecializationType.Type;
+                        continue;
+                    case InjectedClassNameType injectedType:
+                        return new TagType(injectedType.Class);
+                    case AttributedType attributedType:
+                        t = attributedType.Equivalent.Type;
+                        continue;
                 }
+
+                return t;
             }
-
-            var injectedType = t as InjectedClassNameType;
-            if (injectedType != null)
-            {
-                if (injectedType.InjectedSpecializationType.Type != null)
-                    return injectedType.InjectedSpecializationType.Type.Desugar(
-                        resolveTemplateSubstitution);
-                return new TagType(injectedType.Class);
-            }
-
-            var attributedType = t as AttributedType;
-            if (attributedType != null)
-                return attributedType.Equivalent.Type.Desugar(resolveTemplateSubstitution);
-
-            return t;
         }
 
+        /// <summary>
+        /// Removes pointer wrapping from the given type.
+        /// For example int** -> int*.
+        /// </summary>
+        public static Type RemovePointer(this Type t)
+        {
+            if (t is not PointerType)
+                return t;
+
+            return t.GetPointee();
+        }
+
+        /// <summary>
+        /// Removes all pointer wrapping from the given type.
+        /// For example int** -> int.
+        /// </summary>
+        public static Type RemoveAllPointer(this Type t)
+        {
+            while (true)
+            {
+                if (t is not PointerType pointer) 
+                    return t;
+
+                t = pointer;
+            }
+        }
+
+
+        /// <summary>
+        /// Removes reference wrapping from the given type.
+        /// For example int& -> int.
+        /// For example int*& -> int*.
+        /// </summary>
+        public static Type RemoveReference(this Type t)
+        {
+            if (t is not PointerType pointer)
+                return t;
+
+            if (!pointer.IsReference)
+                return t;
+
+            return t.GetPointee();
+        }
+
+        /// <summary>
+        /// Removes all pointer and reference wrapping from the given type.
+        /// </summary>
         public static Type SkipPointerRefs(this Type t)
         {
-            var type = t as PointerType;
-
-            if (type != null)
+            while (true)
             {
-                var pointee = type.Pointee;
+                if (t is not PointerType pointer)
+                    return t;
+                
+                if (!pointer.IsReference())
+                    return t;
 
-                if (type.IsReference())
-                    return pointee.Desugar().SkipPointerRefs();
+                t = pointer.Pointee.Desugar();
             }
-
-            return t;
         }
 
         /// <summary>
@@ -269,13 +284,12 @@
         /// </summary>
         public static Type GetPointee(this Type t)
         {
-            var ptr = t as PointerType;
-            if (ptr != null)
-                return ptr.Pointee;
-            var memberPtr = t as MemberPointerType;
-            if (memberPtr != null)
-                return memberPtr.QualifiedPointee.Type;
-            return null;
+            return t switch
+            {
+                PointerType ptr => ptr.Pointee,
+                MemberPointerType memberPtr => memberPtr.QualifiedPointee.Type,
+                _ => null
+            };
         }
 
         /// <summary>
@@ -296,17 +310,28 @@
             return finalPointee;
         }
 
+        public static PointerType GetFinalPointer(this Type t)
+        {
+            if (t is not PointerType type)
+                return null;
+
+            var pointee = type.Desugar().GetPointee();
+
+            if (pointee.IsPointer())
+                return pointee.GetFinalPointer();
+
+            return type;
+        }
+
         /// <summary>
         /// If t is a pointer type the type pointed to by t will be returned.
         /// Otherwise the default qualified type.
         /// </summary>
         public static QualifiedType GetQualifiedPointee(this Type t)
         {
-            var ptr = t as PointerType;
-            if (ptr != null)
+            if (t is PointerType ptr)
                 return ptr.QualifiedPointee;
-            var memberPtr = t as MemberPointerType;
-            if (memberPtr != null)
+            if (t is MemberPointerType memberPtr)
                 return memberPtr.QualifiedPointee;
             return new QualifiedType();
         }
@@ -329,21 +354,6 @@
             return finalPointee;
         }
 
-        public static PointerType GetFinalPointer(this Type t)
-        {
-            var type = t as PointerType;
-
-            if (type == null)
-                return null;
-
-            var pointee = type.Desugar().GetPointee();
-
-            if (pointee.IsPointer())
-                return pointee.GetFinalPointer();
-
-            return type;
-        }
-
         public static bool ResolvesTo(this QualifiedType type, QualifiedType other)
         {
             if (!type.Qualifiers.Equals(other.Qualifiers))
@@ -351,9 +361,7 @@
 
             var left = type.Type.Desugar();
             var right = other.Type.Desugar();
-            var leftPointer = left as PointerType;
-            var rightPointer = right as PointerType;
-            if (leftPointer != null && rightPointer != null)
+            if (left is PointerType leftPointer && right is PointerType rightPointer)
             {
                 return leftPointer.Modifier == rightPointer.Modifier &&
                     leftPointer.QualifiedPointee.ResolvesTo(rightPointer.QualifiedPointee);
@@ -388,8 +396,7 @@
             qualifiers.IsConst = false;
             type.Qualifiers = qualifiers;
 
-            var ptr = type.Type as PointerType;
-            if (ptr != null)
+            if (type.Type is PointerType ptr)
             {
                 var pointee = ptr.QualifiedPointee;
                 var pointeeQualifiers = pointee.Qualifiers;

@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using CppSharp.AST;
 using CppSharp.AST.Extensions;
-using CppSharp.Generators.CSharp;
 using CppSharp.Passes;
 using CppSharp.Types;
 
@@ -74,8 +73,7 @@ namespace CppSharp.Generators.C
             return true;
         }
 
-        public override TypePrinterResult VisitTagType(TagType tag,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitTagType(TagType tag, TypeQualifiers quals)
         {
             if (FindTypeMap(tag, out var result))
                 return result;
@@ -122,8 +120,7 @@ namespace CppSharp.Generators.C
             return string.Empty;
         }
 
-        public override TypePrinterResult VisitPointerType(PointerType pointer,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitPointerType(PointerType pointer, TypeQualifiers quals)
         {
             if (FindTypeMap(pointer, out TypePrinterResult result))
                 return result;
@@ -139,10 +136,10 @@ namespace CppSharp.Generators.C
 
             var paren = array != null && pointer.Modifier == PointerType.TypeModifier.LVReference;
             if (paren)
-                pointeeType.NamePrefix.Append("(");
+                pointeeType.NamePrefix.Append('(');
             pointeeType.NamePrefix.Append(mod);
             if (paren)
-                pointeeType.NameSuffix.Insert(0, ")");
+                pointeeType.NameSuffix.Insert(0, ')');
 
             var qual = GetStringQuals(quals, false);
             if (!string.IsNullOrEmpty(qual))
@@ -151,21 +148,18 @@ namespace CppSharp.Generators.C
             return pointeeType;
         }
 
-        public override TypePrinterResult VisitMemberPointerType(MemberPointerType member,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitMemberPointerType(MemberPointerType member, TypeQualifiers quals)
         {
             return string.Empty;
         }
 
-        public override TypePrinterResult VisitBuiltinType(BuiltinType builtin,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitBuiltinType(BuiltinType builtin, TypeQualifiers quals)
         {
             var qual = GetStringQuals(quals);
             return $"{qual}{VisitPrimitiveType(builtin.Type)}";
         }
 
-        public override TypePrinterResult VisitPrimitiveType(PrimitiveType primitive,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitPrimitiveType(PrimitiveType primitive, TypeQualifiers quals)
         {
             var qual = GetStringQuals(quals);
             return $"{qual}{VisitPrimitiveType(primitive)}";
@@ -235,8 +229,7 @@ namespace CppSharp.Generators.C
             throw new NotSupportedException();
         }
 
-        public override TypePrinterResult VisitTypedefType(TypedefType typedef,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitTypedefType(TypedefType typedef, TypeQualifiers quals)
         {
             var qual = GetStringQuals(quals);
             if (ResolveTypedefs && !typedef.Declaration.Type.IsPointerTo(out FunctionType _))
@@ -269,8 +262,7 @@ namespace CppSharp.Generators.C
             return decayed.Decayed.Visit(this);
         }
 
-        public override TypePrinterResult VisitTemplateSpecializationType(
-            TemplateSpecializationType template, TypeQualifiers quals)
+        public override TypePrinterResult VisitTemplateSpecializationType(TemplateSpecializationType template, TypeQualifiers quals)
         {
             var specialization = template.GetClassTemplateSpecialization();
             if (specialization == null)
@@ -324,11 +316,11 @@ namespace CppSharp.Generators.C
         {
             if (unaryTransformType.Desugared.Type != null)
                 return unaryTransformType.Desugared.Visit(this);
+
             return unaryTransformType.BaseType.Visit(this);
         }
 
-        public override TypePrinterResult VisitVectorType(VectorType vectorType,
-            TypeQualifiers quals)
+        public override TypePrinterResult VisitVectorType(VectorType vectorType, TypeQualifiers quals)
         {
             // an incomplete implementation but we'd hardly need anything better
             return "__attribute__()";
@@ -440,7 +432,7 @@ namespace CppSharp.Generators.C
             {
                 try
                 {
-                    var expressionPrinter = new CSharpExpressionPrinter(this);
+                    var expressionPrinter = new ExpressionPrinter(this);
                     var defaultValue = expressionPrinter.VisitParameter(param);
                     return $"{result} = {defaultValue}";
                 }
@@ -606,24 +598,16 @@ namespace CppSharp.Generators.C
 
         public override TypePrinterResult VisitFunctionDecl(Function function)
         {
-            string @class;
-            switch (MethodScopeKind)
+            string @class = MethodScopeKind switch
             {
-                case TypePrintScopeKind.Qualified:
-                    @class = $"{function.Namespace.Visit(this)}::";
-                    break;
-                case TypePrintScopeKind.GlobalQualified:
-                    @class = $"::{function.Namespace.Visit(this)}::";
-                    break;
-                default:
-                    @class = string.Empty;
-                    break;
-            }
+                TypePrintScopeKind.Qualified => $"{function.Namespace.Visit(this)}::",
+                TypePrintScopeKind.GlobalQualified => $"::{function.Namespace.Visit(this)}::",
+                _ => string.Empty,
+            };
 
             var @params = string.Join(", ", function.Parameters.Select(p => p.Visit(this)));
             var @const = function is Method method && method.IsConst ? " const" : string.Empty;
-            var name = function.OperatorKind == CXXOperatorKind.Conversion ||
-                function.OperatorKind == CXXOperatorKind.ExplicitConversion ?
+            var name = function.OperatorKind is CXXOperatorKind.Conversion or CXXOperatorKind.ExplicitConversion ?
                 $"operator {function.OriginalReturnType.Visit(this)}" :
                 function.OriginalName;
 

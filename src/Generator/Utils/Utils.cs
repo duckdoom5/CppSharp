@@ -83,7 +83,7 @@ namespace CppSharp
         {
             while (stringBuilder.Length > 0 && stringBuilder[0] == '_')
                 stringBuilder.Remove(0, 1);
-            while (stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] == '_')
+            while (stringBuilder.Length > 0 && stringBuilder[^1] == '_')
                 stringBuilder.Remove(stringBuilder.Length - 1, 1);
         }
     }

@@ -147,7 +147,7 @@ namespace CppSharp.Generators.TS
                         {
                             try
                             {
-                                var expressionPrinter = new CSharpExpressionPrinter(this);
+                                var expressionPrinter = new ExpressionPrinter(this);
                                 var defaultValue = expressionPrinter.VisitParameter(param);
                                 return $"{result} = {defaultValue}";
                             }

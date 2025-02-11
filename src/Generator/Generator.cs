@@ -160,7 +160,7 @@ namespace CppSharp.Generators
 
         protected virtual string TypePrinterDelegate(CppSharp.AST.Type type)
         {
-            return type.Visit(typePrinter);
+            return type.Visit(typePrinter).ToString();
         }
 
         public static string GeneratedIdentifier(string id) =>

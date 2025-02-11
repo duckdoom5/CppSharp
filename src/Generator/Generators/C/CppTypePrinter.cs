@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using CppSharp.AST;
 using CppSharp.AST.Extensions;
+using CppSharp.Generators.C;
 using CppSharp.Passes;
 using CppSharp.Types;
 
@@ -68,68 +71,51 @@ namespace CppSharp.Generators.C
             typePrinter.PushScope(ScopeKind);
 
             var typeName = typeMap.SignatureType(typePrinterContext).Visit(typePrinter);
-            result = new TypePrinterResult(typeName) { TypeMap = typeMap };
+            result = new TypePrinterResult(typeName.ToString()) { TypeMap = typeMap };
 
             return true;
         }
 
-        public override TypePrinterResult VisitTagType(TagType tag, TypeQualifiers quals)
+        public override ITypePrinterResult VisitTagType(TagType tag, TypeQualifiers quals)
         {
             if (FindTypeMap(tag, out var result))
                 return result;
 
-            var qual = GetStringQuals(quals);
-            return $"{qual}{tag.Declaration.Visit(this)}";
-        }
-
-        public override TypePrinterResult VisitArrayType(ArrayType array,
-            TypeQualifiers quals)
-        {
-            string arraySuffix;
-            switch (array.SizeType)
+            return new TypeTypePrinterResult
             {
-                case ArrayType.ArraySize.Constant:
-                    arraySuffix = $"[{array.Size}]";
-                    break;
-                case ArrayType.ArraySize.Variable:
-                case ArrayType.ArraySize.Dependent:
-                case ArrayType.ArraySize.Incomplete:
-                    arraySuffix = $"{(PrintVariableArrayAsPointers ? "*" : "[]")}";
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-
-            return new TypePrinterResult
-            {
-                Type = array.Type.Visit(this),
-                NameSuffix = new System.Text.StringBuilder(arraySuffix)
+                TypeQualifiers = quals.ToCodeString(),
+                Type = tag.Declaration.Visit(this)
             };
         }
 
-        private static string ConvertModifierToString(PointerType.TypeModifier modifier)
+        public override ITypePrinterResult VisitArrayType(ArrayType array, TypeQualifiers quals)
         {
-            switch (modifier)
+            string arraySuffix = array.SizeType switch
             {
-                case PointerType.TypeModifier.Value: return "[]";
-                case PointerType.TypeModifier.Pointer: return "*";
-                case PointerType.TypeModifier.LVReference: return "&";
-                case PointerType.TypeModifier.RVReference: return "&&";
-            }
+                ArrayType.ArraySize.Constant => $"[{array.Size}]",
+                ArrayType.ArraySize.Variable or 
+                ArrayType.ArraySize.Dependent or 
+                ArrayType.ArraySize.Incomplete => $"{(PrintVariableArrayAsPointers ? "*" : "[]")}",
+                _ => throw new NotImplementedException()
+            };
 
-            return string.Empty;
+            return new TypeTypePrinterResult
+            {
+                Type = array.Type.Visit(this).ToString(),
+                TypeModifiers = arraySuffix
+            };
         }
 
-        public override TypePrinterResult VisitPointerType(PointerType pointer, TypeQualifiers quals)
+        public override ITypePrinterResult VisitPointerType(PointerType pointer, TypeQualifiers quals)
         {
             if (FindTypeMap(pointer, out TypePrinterResult result))
                 return result;
 
-            var pointeeType = pointer.Pointee.Visit(this, pointer.QualifiedPointee.Qualifiers);
+            var pointeeType = (TypePrinterResult)pointer.Pointee.Visit(this, pointer.QualifiedPointee.Qualifiers);
             if (pointeeType.TypeMap != null)
                 return pointeeType;
 
-            var mod = PrintTypeModifiers ? ConvertModifierToString(pointer.Modifier) : string.Empty;
+            var mod = PrintTypeModifiers ? pointer.Modifier.ToCodeString() : string.Empty;
             var array = pointer.Pointee as ArrayType;
             if (array != null && array.QualifiedType.IsConst())
                 pointeeType.Type = "const " + pointeeType.Type;
@@ -141,9 +127,7 @@ namespace CppSharp.Generators.C
             if (paren)
                 pointeeType.NameSuffix.Insert(0, ')');
 
-            var qual = GetStringQuals(quals, false);
-            if (!string.IsNullOrEmpty(qual))
-                pointeeType.NamePrefix.Append(' ').Append(qual);
+            pointeeType.NamePrefix.AppendJoinIfNeeded(' ', quals.ToCodeString());
 
             return pointeeType;
         }
@@ -155,128 +139,69 @@ namespace CppSharp.Generators.C
 
         public override TypePrinterResult VisitBuiltinType(BuiltinType builtin, TypeQualifiers quals)
         {
-            var qual = GetStringQuals(quals);
-            return $"{qual}{VisitPrimitiveType(builtin.Type)}";
+            return quals.ToCodeString().JoinIfNeeded(' ', VisitPrimitiveType(builtin.Type));
         }
 
         public override TypePrinterResult VisitPrimitiveType(PrimitiveType primitive, TypeQualifiers quals)
         {
-            var qual = GetStringQuals(quals);
-            return $"{qual}{VisitPrimitiveType(primitive)}";
+            return quals.ToCodeString().JoinIfNeeded(' ', VisitPrimitiveType(primitive));
         }
 
         public virtual TypePrinterResult VisitPrimitiveType(PrimitiveType primitive)
         {
-            switch (primitive)
-            {
-                case PrimitiveType.Bool: return "bool";
-                case PrimitiveType.Void: return "void";
-                case PrimitiveType.Char16: return "char16_t";
-                case PrimitiveType.Char32: return "char32_t";
-                case PrimitiveType.WideChar: return "wchar_t";
-                case PrimitiveType.Char: return "char";
-                case PrimitiveType.SChar: return "signed char";
-                case PrimitiveType.UChar: return "unsigned char";
-                case PrimitiveType.Short: return "short";
-                case PrimitiveType.UShort: return "unsigned short";
-                case PrimitiveType.Int: return "int";
-                case PrimitiveType.UInt: return "unsigned int";
-                case PrimitiveType.Long: return "long";
-                case PrimitiveType.ULong: return "unsigned long";
-                case PrimitiveType.LongLong: return "long long";
-                case PrimitiveType.ULongLong: return "unsigned long long";
-                case PrimitiveType.Int128: return "__int128_t";
-                case PrimitiveType.UInt128: return "__uint128_t";
-                case PrimitiveType.Half: return "__fp16";
-                case PrimitiveType.Float: return "float";
-                case PrimitiveType.Double: return "double";
-                case PrimitiveType.LongDouble: return "long double";
-                case PrimitiveType.Float128: return "__float128";
-                case PrimitiveType.IntPtr: return "void*";
-                case PrimitiveType.UIntPtr: return "uintptr_t";
-                case PrimitiveType.Null:
-                    return PrintFlavorKind == CppTypePrintFlavorKind.Cpp ?
-                        "std::nullptr_t" : "NULL";
-                case PrimitiveType.String:
-                    {
-                        switch (PrintFlavorKind)
-                        {
-                            case CppTypePrintFlavorKind.C:
-                                return "const char*";
-                            case CppTypePrintFlavorKind.Cpp:
-                                return "std::string";
-                            case CppTypePrintFlavorKind.ObjC:
-                                return "NSString";
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-                    }
-                case PrimitiveType.Decimal:
-                    {
-                        switch (PrintFlavorKind)
-                        {
-                            case CppTypePrintFlavorKind.C:
-                            case CppTypePrintFlavorKind.Cpp:
-                                return "_Decimal32";
-                            case CppTypePrintFlavorKind.ObjC:
-                                return "NSDecimalNumber";
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-                    }
-            }
-
-            throw new NotSupportedException();
+            return primitive.ToCodeString(PrintFlavorKind);
         }
 
         public override TypePrinterResult VisitTypedefType(TypedefType typedef, TypeQualifiers quals)
         {
-            var qual = GetStringQuals(quals);
             if (ResolveTypedefs && !typedef.Declaration.Type.IsPointerTo(out FunctionType _))
             {
-                TypePrinterResult type = typedef.Declaration.QualifiedType.Visit(this);
+                var type = (TypePrinterResult)typedef.Declaration.QualifiedType.Visit(this);
                 return new TypePrinterResult
                 {
-                    Type = $"{qual}{type.Type}",
+                    Type = string.Join(' ', quals.ToCodeString(), type.Type), // TODO: [TypePrefix] Fix me
+                    TypeSuffix = type.TypeSuffix,
                     NamePrefix = type.NamePrefix,
                     NameSuffix = type.NameSuffix
                 };
             }
 
             var result = typedef.Declaration.Visit(this);
-            if (result.NamePrefix.Length > 0)
-                result.NamePrefix.Append($"{qual}");
+            if (result.NamePrefix.Length > 0) // TODO: [TypePrefix] Fix me
+                result.NamePrefix.Append(quals.ToCodeString());
 
             return result;
         }
 
-        public override TypePrinterResult VisitAttributedType(AttributedType attributed,
+        public override ITypePrinterResult VisitAttributedType(AttributedType attributed,
             TypeQualifiers quals)
         {
             return attributed.Modified.Visit(this);
         }
 
-        public override TypePrinterResult VisitDecayedType(DecayedType decayed,
+        public override ITypePrinterResult VisitDecayedType(DecayedType decayed,
             TypeQualifiers quals)
         {
             return decayed.Decayed.Visit(this);
         }
 
-        public override TypePrinterResult VisitTemplateSpecializationType(TemplateSpecializationType template, TypeQualifiers quals)
+        public override ITypePrinterResult VisitTemplateSpecializationType(TemplateSpecializationType template, TypeQualifiers quals)
         {
             var specialization = template.GetClassTemplateSpecialization();
             if (specialization == null)
-                return string.Empty;
+                return new TypePrinterResult();
 
-            var qual = GetStringQuals(quals);
-            return $"{qual}{VisitClassTemplateSpecializationDecl(specialization)}";
+            return new TypeTypePrinterResult{
+                TypeQualifiers = quals.ToCodeString(),
+                Type = VisitClassTemplateSpecializationDecl(specialization)
+            };
         }
 
         public override TypePrinterResult VisitDependentTemplateSpecializationType(
             DependentTemplateSpecializationType template, TypeQualifiers quals)
         {
             if (template.Desugared.Type != null)
-                return template.Desugared.Visit(this);
+                return (TypePrinterResult)template.Desugared.Visit(this);
             return string.Empty;
         }
 
@@ -286,7 +211,7 @@ namespace CppSharp.Generators.C
             return param.Parameter?.Name ?? string.Empty;
         }
 
-        public override TypePrinterResult VisitTemplateParameterSubstitutionType(
+        public override ITypePrinterResult VisitTemplateParameterSubstitutionType(
             TemplateParameterSubstitutionType param, TypeQualifiers quals)
         {
             return param.Replacement.Type.Visit(this, quals);
@@ -302,7 +227,7 @@ namespace CppSharp.Generators.C
             DependentNameType dependent, TypeQualifiers quals)
         {
             return dependent.Qualifier.Type != null ?
-                dependent.Qualifier.Visit(this).Type : string.Empty;
+                ((TypePrinterResult)dependent.Qualifier.Visit(this)).Type : string.Empty;
         }
 
         public override TypePrinterResult VisitPackExpansionType(
@@ -311,7 +236,7 @@ namespace CppSharp.Generators.C
             return string.Empty;
         }
 
-        public override TypePrinterResult VisitUnaryTransformType(
+        public override ITypePrinterResult VisitUnaryTransformType(
             UnaryTransformType unaryTransformType, TypeQualifiers quals)
         {
             if (unaryTransformType.Desugared.Type != null)
@@ -413,7 +338,7 @@ namespace CppSharp.Generators.C
             var oldParam = Parameter;
             Parameter = param;
 
-            var result = param.QualifiedType.Visit(this);
+            var result = (TypePrinterResult)param.QualifiedType.Visit(this);
 
             Parameter = oldParam;
 
@@ -457,12 +382,12 @@ namespace CppSharp.Generators.C
             if (type.Qualifiers.Mode == TypeQualifiersMode.Native)
             {
                 PushContext(TypePrinterContextKind.Native);
-                var result = base.VisitQualifiedType(type);
+                var result = (TypePrinterResult)base.VisitQualifiedType(type);
                 PopContext();
                 return result;
             }
 
-            return base.VisitQualifiedType(type);
+            return (TypePrinterResult)base.VisitQualifiedType(type);
         }
 
         public virtual TypePrinterResult GetDeclName(Declaration declaration,
@@ -558,8 +483,7 @@ namespace CppSharp.Generators.C
             return PrintTags ? PrintTag(@class) + printed : printed;
         }
 
-        public override TypePrinterResult VisitClassTemplateSpecializationDecl(
-            ClassTemplateSpecialization specialization)
+        public override TypePrinterResult VisitClassTemplateSpecializationDecl(ClassTemplateSpecialization specialization)
         {
             var args = new List<string>();
             for (int i = 0; i < specialization.Arguments.Count; i++)
@@ -568,7 +492,7 @@ namespace CppSharp.Generators.C
                 switch (arg.Kind)
                 {
                     case TemplateArgument.ArgumentKind.Type:
-                        args.Add(arg.Type.Visit(this));
+                        args.Add((TypePrinterResult)arg.Type.Visit(this));
                         break;
                     case TemplateArgument.ArgumentKind.Declaration:
                         if (arg.Declaration != null)
@@ -598,6 +522,15 @@ namespace CppSharp.Generators.C
 
         public override TypePrinterResult VisitFunctionDecl(Function function)
         {
+            Debug.Assert(!function.IsDeleted, "expected deleted functions to be ignored");
+
+            var @return = (TypePrinterResult)function.OriginalReturnType.Visit(this);
+
+            if (function.IsInline && !function.IsConstExpr) // constexpr implies inline
+                @return.TypePrefix.Append("inline ");
+            if (function.IsConstExpr)
+                @return.TypePrefix.Append("constexpr ");
+            
             string @class = MethodScopeKind switch
             {
                 TypePrintScopeKind.Qualified => $"{function.Namespace.Visit(this)}::",
@@ -605,23 +538,25 @@ namespace CppSharp.Generators.C
                 _ => string.Empty,
             };
 
-            var @params = string.Join(", ", function.Parameters.Select(p => p.Visit(this)));
-            var @const = function is Method method && method.IsConst ? " const" : string.Empty;
             var name = function.OperatorKind is CXXOperatorKind.Conversion or CXXOperatorKind.ExplicitConversion ?
                 $"operator {function.OriginalReturnType.Visit(this)}" :
                 function.OriginalName;
-
-            FunctionType functionType;
-            CppSharp.AST.Type desugared = function.FunctionType.Type.Desugar();
-            if (!desugared.IsPointerTo(out functionType))
-                functionType = (FunctionType)desugared;
-            string exceptionType = functionType != null ? Print(functionType.ExceptionSpecType) : "";
-
-            var @return = function.OriginalReturnType.Visit(this);
+            
             @return.Name = @class + name;
-            @return.NameSuffix.Append('(').Append(@params)
-                .Append(function.IsVariadic ? ", ..." : string.Empty).Append(')')
-                .Append(@const).Append(exceptionType);
+
+            var @params = string.Join(", ", function.Parameters.Select(p => p.Visit(this)));
+            if (function.IsVariadic)
+                @params = string.Join(", ", @params, "...");
+
+            CppSharp.AST.Type desugared = function.FunctionType.Type.Desugar();
+            if (!desugared.IsPointerTo(out FunctionType functionType))
+                functionType = (FunctionType)desugared;
+
+            string exceptionType = functionType != null ? functionType.ExceptionSpecType.ToCodeString() : string.Empty;
+
+            @return.NameSuffix
+                .AppendJoinIfNeeded(' ', $"({@params})", exceptionType);
+
             return @return;
         }
 
@@ -637,6 +572,30 @@ namespace CppSharp.Generators.C
                 @return.NamePrefix.Clear();
             }
 
+            if (method.IsVirtual)
+                @return.TypePrefix.Append("virtual ");
+
+            if (method.IsConst)
+                @return.NameSuffix.Append(" const");
+
+            switch (method.RefQualifier)
+            {
+                case RefQualifier.LValue:
+                    @return.NameSuffix.Append(" &");
+                    break;
+                case RefQualifier.RValue:
+                    @return.NameSuffix.Append(" &&");
+                    break;
+                case RefQualifier.None:
+                default:
+                    break;
+            }
+            
+            if (method.IsFinal)
+                @return.NameSuffix.Append(" final");
+            else if (method.IsOverride)
+                @return.NameSuffix.Append(" override");
+
             return @return;
         }
 
@@ -648,7 +607,7 @@ namespace CppSharp.Generators.C
         public override TypePrinterResult VisitTypedefDecl(TypedefDecl typedef)
         {
             if (ResolveTypedefs)
-                return typedef.Type.Visit(this);
+                return (TypePrinterResult)typedef.Type.Visit(this);
 
             if (PrintFlavorKind != CppTypePrintFlavorKind.Cpp)
                 return typedef.OriginalName;
@@ -714,7 +673,7 @@ namespace CppSharp.Generators.C
 
         public override string ToString(CppSharp.AST.Type type)
         {
-            return type.Visit(this);
+            return type.Visit(this).ToString();
         }
 
         public override TypePrinterResult VisitTemplateTemplateParameterDecl(
@@ -790,37 +749,6 @@ namespace CppSharp.Generators.C
                 default:
                     throw new ArgumentOutOfRangeException(nameof(@class.TagKind));
             }
-        }
-
-        private static string Print(ExceptionSpecType exceptionSpecType)
-        {
-            switch (exceptionSpecType)
-            {
-                case ExceptionSpecType.BasicNoexcept:
-                    return " noexcept";
-                case ExceptionSpecType.NoexceptFalse:
-                    return " noexcept(false)";
-                case ExceptionSpecType.NoexceptTrue:
-                    return " noexcept(true)";
-                // TODO: research and handle the remaining cases
-                default:
-                    return string.Empty;
-            }
-        }
-
-        private string GetStringQuals(TypeQualifiers quals, bool appendSpace = true)
-        {
-            var stringQuals = new List<string>();
-            if (PrintTypeQualifiers)
-            {
-                if (quals.IsConst)
-                    stringQuals.Add("const");
-                if (quals.IsVolatile)
-                    stringQuals.Add("volatile");
-            }
-            if (stringQuals.Count == 0)
-                return string.Empty;
-            return string.Join(" ", stringQuals) + (appendSpace ? " " : string.Empty);
         }
     }
 }

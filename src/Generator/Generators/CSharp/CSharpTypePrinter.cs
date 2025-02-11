@@ -50,7 +50,7 @@ namespace CppSharp.Generators.CSharp
                 return typeMap.SignatureType(typePrinterContext).ToString();
             }
 
-            return base.VisitTagType(tag, quals);
+            return (TypePrinterResult)base.VisitTagType(tag, quals);
         }
 
         public override TypePrinterResult VisitArrayType(ArrayType array,
@@ -65,7 +65,7 @@ namespace CppSharp.Generators.CSharp
                 if (array.Size == 0)
                 {
                     var pointer = new PointerType(array.QualifiedType);
-                    return pointer.Visit(this);
+                    return (TypePrinterResult)pointer.Visit(this);
                 }
 
                 PrimitiveType primitiveType;
@@ -76,7 +76,7 @@ namespace CppSharp.Generators.CSharp
                     if (primitiveType == PrimitiveType.Void)
                         return "void*";
 
-                    return array.QualifiedType.Visit(this);
+                    return (TypePrinterResult)array.QualifiedType.Visit(this);
                 }
 
                 if (Parameter != null)
@@ -92,7 +92,7 @@ namespace CppSharp.Generators.CSharp
                 if (arrayType.IsClass())
                     return new TypePrinterResult($"fixed byte", $"[{array.GetSizeInBytes()}]");
 
-                TypePrinterResult arrayElemType = array.QualifiedType.Visit(this);
+                TypePrinterResult arrayElemType = (TypePrinterResult)array.QualifiedType.Visit(this);
 
                 // C# does not support fixed arrays of machine pointer type (void* or IntPtr).
                 // In that case, replace it by a pointer to an integer type of the same size.
@@ -159,9 +159,9 @@ namespace CppSharp.Generators.CSharp
                     Type = builtin,
                     Parameter = Parameter
                 };
-                return typeMap.SignatureType(typePrinterContext).Visit(this);
+                return (TypePrinterResult)typeMap.SignatureType(typePrinterContext).Visit(this);
             }
-            return base.VisitBuiltinType(builtin, quals);
+            return (TypePrinterResult)base.VisitBuiltinType(builtin, quals);
         }
 
         public override TypePrinterResult VisitFunctionType(FunctionType function, TypeQualifiers quals)
@@ -176,7 +176,7 @@ namespace CppSharp.Generators.CSharp
                 return IntPtrType;
 
             if (pointer.Pointee is FunctionType)
-                return pointer.Pointee.Visit(this, quals);
+                return (TypePrinterResult)pointer.Pointee.Visit(this, quals);
 
             var isManagedContext = ContextKind == TypePrinterContextKind.Managed;
 
@@ -191,14 +191,14 @@ namespace CppSharp.Generators.CSharp
                     Type = pointer.Pointee,
                     Parameter = Parameter
                 };
-                return typeMap.SignatureType(typePrinterContext).Visit(this);
+                return (TypePrinterResult)typeMap.SignatureType(typePrinterContext).Visit(this);
             }
 
             var pointee = pointer.Pointee.Desugar();
 
             if (isManagedContext &&
                 new QualifiedType(pointer, quals).IsConstRefToPrimitive())
-                return pointee.Visit(this);
+                return (TypePrinterResult)pointee.Visit(this);
 
             // From http://msdn.microsoft.com/en-us/library/y31yhkeb.aspx
             // Any of the following types may be a pointer type:
@@ -213,7 +213,7 @@ namespace CppSharp.Generators.CSharp
                 // Skip one indirection if passed by reference
                 bool isRefParam = Parameter != null && (Parameter.IsOut || Parameter.IsInOut);
                 if (isManagedContext && isRefParam)
-                    return pointer.QualifiedPointee.Visit(this);
+                    return (TypePrinterResult)pointer.QualifiedPointee.Visit(this);
 
                 if (pointee.IsPrimitiveType(PrimitiveType.Void))
                     return IntPtrType;
@@ -237,7 +237,7 @@ namespace CppSharp.Generators.CSharp
                 return IntPtrType;
             }
 
-            return pointer.QualifiedPointee.Visit(this);
+            return (TypePrinterResult)pointer.QualifiedPointee.Visit(this);
         }
 
         public override TypePrinterResult VisitMemberPointerType(MemberPointerType member,
@@ -245,7 +245,7 @@ namespace CppSharp.Generators.CSharp
         {
             FunctionType functionType;
             if (member.IsPointerTo(out functionType))
-                return functionType.Visit(this, quals);
+                return (TypePrinterResult)functionType.Visit(this, quals);
 
             // TODO: Non-function member pointer types are tricky to support.
             // Re-visit this.
@@ -289,7 +289,7 @@ namespace CppSharp.Generators.CSharp
                 return VisitDeclaration(decl);
             }
 
-            return decl.Type.Visit(this);
+            return (TypePrinterResult)decl.Type.Visit(this);
         }
 
         public override TypePrinterResult VisitTemplateSpecializationType(
@@ -321,7 +321,7 @@ namespace CppSharp.Generators.CSharp
                 }
 
                 if (ContextKind == TypePrinterContextKind.Native)
-                    return template.Desugared.Visit(this);
+                    return (TypePrinterResult)template.Desugared.Visit(this);
 
                 return decl.Visit(this);
             }
@@ -342,7 +342,7 @@ namespace CppSharp.Generators.CSharp
             DependentTemplateSpecializationType template, TypeQualifiers quals)
         {
             if (template.Desugared.Type != null)
-                return template.Desugared.Visit(this);
+                return (TypePrinterResult)template.Desugared.Visit(this);
             return string.Empty;
         }
 
@@ -356,14 +356,14 @@ namespace CppSharp.Generators.CSharp
             TemplateParameterSubstitutionType param, TypeQualifiers quals)
         {
             var type = param.Replacement.Type;
-            return type.Visit(this, param.Replacement.Qualifiers);
+            return (TypePrinterResult)type.Visit(this, param.Replacement.Qualifiers);
         }
 
         public override TypePrinterResult VisitInjectedClassNameType(
             InjectedClassNameType injected, TypeQualifiers quals)
         {
             return injected.InjectedSpecializationType.Type != null ?
-                injected.InjectedSpecializationType.Visit(this) :
+                (TypePrinterResult)injected.InjectedSpecializationType.Visit(this) :
                 injected.Class.Visit(this);
         }
 
@@ -539,7 +539,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
                     VisitPrimitiveType(pointee, new TypeQualifiers()).Type)}>";
             }
             return type.IsPrimitiveType(PrimitiveType.Void) ?
-                new TypePrinterResult("object") : type.Visit(this);
+                new TypePrinterResult("object") : (TypePrinterResult)type.Visit(this);
         }
 
         public override TypePrinterResult VisitParameterDecl(Parameter parameter)
@@ -550,7 +550,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
                 return IntPtrType;
 
             Parameter = parameter;
-            var ret = paramType.Visit(this);
+            var ret = (TypePrinterResult)paramType.Visit(this);
             Parameter = null;
 
             return ret;
@@ -604,7 +604,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
                 p => ContextKind == TypePrinterContextKind.Native ||
                     (p.Kind != ParameterKind.IndirectReturnType && !p.Ignore));
 
-            return base.VisitParameters(@params, hasNames);
+            return (TypePrinterResult)base.VisitParameters(@params, hasNames);
         }
 
         public override TypePrinterResult VisitParameter(Parameter param, bool hasName)
@@ -642,7 +642,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
 
         public override string ToString(Type type)
         {
-            return type.Visit(this).Type;
+            return ((TypePrinterResult)type.Visit(this)).Type;
         }
 
         public override TypePrinterResult VisitTemplateTemplateParameterDecl(
@@ -667,14 +667,14 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
             UnaryTransformType unaryTransformType, TypeQualifiers quals)
         {
             if (unaryTransformType.Desugared.Type != null)
-                return unaryTransformType.Desugared.Visit(this);
-            return unaryTransformType.BaseType.Visit(this);
+                return (TypePrinterResult)unaryTransformType.Desugared.Visit(this);
+            return (TypePrinterResult)unaryTransformType.BaseType.Visit(this);
         }
 
         public override TypePrinterResult VisitVectorType(VectorType vectorType,
             TypeQualifiers quals)
         {
-            return vectorType.ElementType.Visit(this);
+            return (TypePrinterResult)vectorType.ElementType.Visit(this);
         }
 
         public override TypePrinterResult VisitUnsupportedType(UnsupportedType type, TypeQualifiers quals)
@@ -698,7 +698,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
         public override TypePrinterResult VisitFieldDecl(Field field)
         {
             PushMarshalKind(MarshalKind.NativeField);
-            var fieldTypePrinted = field.QualifiedType.Visit(this);
+            var fieldTypePrinted = (TypePrinterResult)field.QualifiedType.Visit(this);
             PopMarshalKind();
 
             var returnTypePrinter = new TypePrinterResult();
@@ -720,7 +720,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
         public TypePrinterResult PrintNative(Type type)
         {
             PushContext(TypePrinterContextKind.Native);
-            var typePrinterResult = type.Visit(this);
+            var typePrinterResult = (TypePrinterResult)type.Visit(this);
             PopContext();
             return typePrinterResult;
         }
@@ -728,7 +728,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
         public TypePrinterResult PrintNative(QualifiedType type)
         {
             PushContext(TypePrinterContextKind.Native);
-            var typePrinterResult = type.Visit(this);
+            var typePrinterResult = (TypePrinterResult)type.Visit(this);
             PopContext();
             return typePrinterResult;
         }

@@ -6,10 +6,26 @@ using System.Text;
 
 namespace CppSharp.Generators
 {
-    public class TypePrinterResult
+    public interface ITypePrinterResult
+    {
+        public string ToString();
+    }
+
+    public abstract class TypePrinterResultBase : ITypePrinterResult
+    {
+        public static implicit operator string(TypePrinterResultBase result) =>
+            result.ToString();
+
+        public abstract override string ToString();
+        
+    }
+
+    public class TypePrinterResult : TypePrinterResultBase
     {
         public string Type { get; set; }
         public string Name { get; set; } = string.Empty;
+        public StringBuilder TypePrefix { get; set; } = new();
+        public StringBuilder TypeSuffix { get; set; } = new();
         public StringBuilder NamePrefix { get; set; } = new();
         public StringBuilder NameSuffix { get; set; } = new();
         public TypeMap TypeMap { get; set; }
@@ -45,11 +61,62 @@ namespace CppSharp.Generators
 
             var namePrefix = Name.Length > 0 && (NamePrefix.Length > 0 || Type.Length > 0) ?
                 $"{NamePrefix} " : NamePrefix.ToString();
-            return $"{Type}{namePrefix}{Name}{NameSuffix}";
+
+            TypePrefix.AppendIfNeeded(' ');
+
+            return $"{TypePrefix}{Type}{TypeSuffix}{namePrefix}{Name}{NameSuffix}";
+        }
+    }
+    
+    public class TypeTypePrinterResult : TypePrinterResult
+    {
+        public string TypeQualifiers { get; set; }
+        //public string Type { get; set; }
+        public string TypeModifiers { get; set; }
+
+
+        public static implicit operator string(TypeTypePrinterResult result) =>
+            result.ToString();
+
+        public override string ToString()
+        {
+            var namePrefix = Name.Length > 0 && (NamePrefix.Length > 0 || Type.Length > 0) ?
+                $"{NamePrefix} " : NamePrefix.ToString();
+
+            return new StringBuilder()
+                .AppendJoinIfNeeded(' ', TypeQualifiers, $"{Type}{TypeModifiers}{TypeSuffix}{namePrefix}{Name}{NameSuffix}")
+                .ToString();
         }
     }
 
-    public class TypePrinter : ITypePrinter<TypePrinterResult>,
+    public class NamedTypePrinterResult : TypeTypePrinterResult
+    {
+        public string VariableName { get; set; }
+
+        public override string ToString()
+        {
+            return new StringBuilder()
+                .AppendJoinIfNeeded(' ', 
+                    TypeQualifiers,
+                    $"{Type}{TypeModifiers}",
+                    VariableName)
+                .ToString();
+        }
+    }
+
+    public class CSVListPrinterResult : TypeTypePrinterResult
+    {
+        public string[] Values { get; set; }
+
+        public override string ToString()
+        {
+            return new StringBuilder()
+                .AppendJoinIfNeeded(',', Values)
+                .ToString();
+        }
+    }
+
+    public class TypePrinter : ITypePrinter<ITypePrinterResult>,
         IDeclVisitor<TypePrinterResult>
     {
         private readonly Stack<TypePrinterContextKind> contexts;
@@ -93,25 +160,25 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitArrayType(ArrayType array,
+        public virtual ITypePrinterResult VisitArrayType(ArrayType array,
             TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitAttributedType(AttributedType attributed,
+        public virtual ITypePrinterResult VisitAttributedType(AttributedType attributed,
             TypeQualifiers quals)
         {
             return attributed.Modified.Visit(this);
         }
 
-        public virtual TypePrinterResult VisitBuiltinType(BuiltinType builtin,
+        public virtual ITypePrinterResult VisitBuiltinType(BuiltinType builtin,
             TypeQualifiers quals)
         {
             return VisitPrimitiveType(builtin.Type, quals);
         }
 
-        public virtual TypePrinterResult VisitCILType(CILType type, TypeQualifiers quals)
+        public virtual ITypePrinterResult VisitCILType(CILType type, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
@@ -132,7 +199,7 @@ namespace CppSharp.Generators
             return VisitClassDecl(specialization);
         }
 
-        public virtual TypePrinterResult VisitDecayedType(DecayedType decayed,
+        public virtual ITypePrinterResult VisitDecayedType(DecayedType decayed,
             TypeQualifiers quals)
         {
             return decayed.Decayed.Visit(this);
@@ -143,24 +210,23 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitDeclaration(Declaration decl,
-            TypeQualifiers quals)
+        public virtual ITypePrinterResult VisitDeclaration(Declaration decl, TypeQualifiers quals)
         {
             return VisitDeclaration(decl);
         }
 
-        public virtual TypePrinterResult VisitDelegate(FunctionType function)
+        public virtual ITypePrinterResult VisitDelegate(FunctionType function)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitDependentNameType(
+        public virtual ITypePrinterResult VisitDependentNameType(
             DependentNameType dependent, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitDependentTemplateSpecializationType(
+        public virtual ITypePrinterResult VisitDependentTemplateSpecializationType(
             DependentTemplateSpecializationType template, TypeQualifiers quals)
         {
             throw new NotImplementedException();
@@ -206,12 +272,12 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitFunctionType(FunctionType function, TypeQualifiers quals)
+        public virtual ITypePrinterResult VisitFunctionType(FunctionType function, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitInjectedClassNameType(
+        public virtual ITypePrinterResult VisitInjectedClassNameType(
             InjectedClassNameType injected, TypeQualifiers quals)
         {
             throw new NotImplementedException();
@@ -222,7 +288,7 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitMemberPointerType(
+        public virtual ITypePrinterResult VisitMemberPointerType(
             MemberPointerType member, TypeQualifiers quals)
         {
             return member.QualifiedPointee.Visit(this);
@@ -244,28 +310,32 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitPackExpansionType(
+        public virtual ITypePrinterResult VisitPackExpansionType(
             PackExpansionType packExpansionType, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitParameter(Parameter param,
+        public virtual ITypePrinterResult VisitParameter(Parameter param,
             bool hasName = true)
         {
             Parameter = param;
             var type = param.QualifiedType.Visit(this);
-            var name = hasName ? $" {param.Name}" : string.Empty;
             Parameter = null;
-            return $"{type}{name}";
+
+            return new NamedTypePrinterResult
+            {
+                Type = type.ToString(),
+                VariableName = hasName ? param.Name : string.Empty
+            };
         }
 
         public virtual TypePrinterResult VisitParameterDecl(Parameter parameter)
         {
-            return VisitParameter(parameter, hasName: false);
+            return (TypePrinterResult)VisitParameter(parameter, hasName: false);
         }
 
-        public virtual TypePrinterResult VisitParameters(IEnumerable<Parameter> @params,
+        public virtual ITypePrinterResult VisitParameters(IEnumerable<Parameter> @params,
             bool hasNames = true)
         {
             var args = new List<string>();
@@ -273,20 +343,23 @@ namespace CppSharp.Generators
             foreach (var param in @params)
             {
                 Parameter = param;
-                args.Add(VisitParameter(param, hasNames).Type);
+                args.Add(((TypePrinterResult)VisitParameter(param, hasNames)).Type);
             }
 
             Parameter = null;
-            return string.Join(", ", args);
+            return new CSVListPrinterResult
+            {
+                Values = args.ToArray()
+            };
         }
 
-        public virtual TypePrinterResult VisitPointerType(PointerType pointer,
+        public virtual ITypePrinterResult VisitPointerType(PointerType pointer,
             TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitPrimitiveType(PrimitiveType type,
+        public virtual ITypePrinterResult VisitPrimitiveType(PrimitiveType type,
             TypeQualifiers quals)
         {
             throw new NotImplementedException();
@@ -297,10 +370,10 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitTagType(TagType tag, TypeQualifiers quals)
+        public virtual ITypePrinterResult VisitTagType(TagType tag, TypeQualifiers quals)
         {
             if (tag.Declaration == null)
-                return string.Empty;
+                return new TypePrinterResult();
 
             return tag.Declaration.Visit(this);
         }
@@ -311,19 +384,19 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitTemplateParameterSubstitutionType(
+        public virtual ITypePrinterResult VisitTemplateParameterSubstitutionType(
             TemplateParameterSubstitutionType param, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitTemplateParameterType(
+        public virtual ITypePrinterResult VisitTemplateParameterType(
             TemplateParameterType param, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitTemplateSpecializationType(
+        public virtual ITypePrinterResult VisitTemplateSpecializationType(
             TemplateSpecializationType template, TypeQualifiers quals)
         {
             throw new NotImplementedException();
@@ -361,24 +434,24 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitTypedefType(TypedefType typedef,
+        public virtual ITypePrinterResult VisitTypedefType(TypedefType typedef,
             TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitUnaryTransformType(
+        public virtual ITypePrinterResult VisitUnaryTransformType(
             UnaryTransformType unaryTransformType, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public TypePrinterResult VisitUnresolvedUsingType(UnresolvedUsingType unresolvedUsingType, TypeQualifiers quals)
+        public virtual ITypePrinterResult VisitUnresolvedUsingType(UnresolvedUsingType unresolvedUsingType, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitUnsupportedType(UnsupportedType type,
+        public virtual ITypePrinterResult VisitUnsupportedType(UnsupportedType type,
             TypeQualifiers quals)
         {
             throw new NotImplementedException();
@@ -400,18 +473,18 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public TypePrinterResult VisitUnresolvedUsingDecl(UnresolvedUsingTypename unresolvedUsingTypename)
+        public virtual TypePrinterResult VisitUnresolvedUsingDecl(UnresolvedUsingTypename unresolvedUsingTypename)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitVectorType(VectorType vectorType,
+        public virtual ITypePrinterResult VisitVectorType(VectorType vectorType,
             TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitQualifiedType(QualifiedType type)
+        public virtual ITypePrinterResult VisitQualifiedType(QualifiedType type)
         {
             return type.Type.Visit(this, type.Qualifiers);
         }

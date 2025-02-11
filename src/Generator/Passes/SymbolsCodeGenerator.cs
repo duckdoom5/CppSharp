@@ -230,7 +230,7 @@ namespace CppSharp.Passes
                 Write("static constexpr ");
             }
             cppTypePrinter.PrintTags = true;
-            TypePrinterResult returnType = function.OriginalReturnType.Visit(cppTypePrinter);
+            TypePrinterResult returnType = (TypePrinterResult)function.OriginalReturnType.Visit(cppTypePrinter);
             string signature = GetSignature(function);
             cppTypePrinter.PrintTags = false;
 

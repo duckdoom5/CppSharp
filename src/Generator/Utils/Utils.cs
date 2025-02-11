@@ -110,6 +110,11 @@ namespace CppSharp
             return AppendJoinIfNeededCore(self, separator, values);
         }
 
+        public static StringBuilder AppendJoinIfNeeded(this StringBuilder self, char separator, ReadOnlySpan<object> values)
+        {
+            return AppendJoinIfNeededCore(self, separator, values);
+        }
+
         private static StringBuilder AppendJoinIfNeededCore(this StringBuilder self, char separator, ReadOnlySpan<object> values)
         {
             if (values.IsEmpty)
@@ -117,10 +122,44 @@ namespace CppSharp
             
             for (int i = 0; i < values.Length; i++)
             {
+                var value = values[i]?.ToString();
+                if (string.IsNullOrEmpty(value))
+                    continue;
+
                 self.AppendIfNeeded(separator);
-                self.Append(values[i]!);
+                self.Append(value);
             }
             return self;
+        }
+
+        /// <summary>
+        /// Appends a character to the string builder if it is not already the last character.
+        /// Note: Empty strings are not appended to.
+        /// </summary>
+        public static string AppendIfNeeded(this string self, char toAppend)
+        {
+            if (self.Length == 0)
+                return self;
+
+            if (self[^1] != toAppend)
+                self += toAppend;
+
+            return self;
+        }
+
+        public static string JoinIfNeeded(this string self, char separator, params string[] values)
+        {
+            return JoinIfNeededCore(self, separator, values);
+        }
+
+        private static string JoinIfNeededCore(this string self, char separator, ReadOnlySpan<object> values)
+        {
+            if (values.IsEmpty)
+                return self;
+
+            return new StringBuilder(self)
+                .AppendJoinIfNeeded(separator, values)
+                .ToString();
         }
     }
 

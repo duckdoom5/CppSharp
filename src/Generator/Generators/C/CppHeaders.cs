@@ -553,7 +553,7 @@ namespace CppSharp.Generators.Cpp
             GenerateDeclarationCommon(@event);
 
             var type = @event.Type.Visit(CTypePrinter);
-            type = type.ToString().Replace("()", string.Empty);
+            type = (TypePrinterResult)type.ToString().Replace("()", string.Empty);
 
             WriteLine($"fastdelegate::FastDelegate<{type}> {@event.Name};");
 

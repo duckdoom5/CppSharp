@@ -433,7 +433,7 @@ namespace CppSharp.Generators.Cpp
             if (pointee is FunctionType)
             {
                 typePrinter.PushContext(TypePrinterContextKind.Managed);
-                var cppTypeName = pointer.Visit(typePrinter, quals);
+                var cppTypeName = (TypePrinterResult)pointer.Visit(typePrinter, quals);
                 typePrinter.PopContext();
 
                 return VisitDelegateType(cppTypeName);
@@ -624,7 +624,7 @@ namespace CppSharp.Generators.Cpp
                 }
                 else
                 {
-                    cppTypeName = decl.Type.Visit(typePrinter, quals);
+                    cppTypeName = (TypePrinterResult)decl.Type.Visit(typePrinter, quals);
                 }
 
                 VisitDelegateType(cppTypeName);

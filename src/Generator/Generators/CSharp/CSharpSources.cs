@@ -695,7 +695,7 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
         {
             TypePrinter.PushContext(TypePrinterContextKind.Native);
 
-            retType = function.ReturnType.Visit(TypePrinter);
+            retType = (TypePrinterResult)function.ReturnType.Visit(TypePrinter);
 
             var @params = function.GatherInternalParams(Context.ParserOptions.IsItaniumLikeAbi).Select(p =>
                 $"{p.Visit(TypePrinter)} {p.Name}").ToList();
@@ -738,7 +738,7 @@ internal static bool {Helpers.TryGetNativeToManagedMappingIdentifier}(IntPtr nat
             foreach (var typeMap in Context.TypeMaps.TypeMaps.Values)
                 typeMap.IsEnabled = true;
 
-            return typeName;
+            return (TypePrinterResult)typeName;
         }
 
         public override void GenerateClassSpecifier(Class @class)

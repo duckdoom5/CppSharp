@@ -99,7 +99,7 @@ namespace CppSharp.Generators.C
 
             PushBlock();
 
-            var result = typedef.Type.Visit(CTypePrinter);
+            var result = (TypePrinterResult)typedef.Type.Visit(CTypePrinter);
             result.Name = typedef.Name;
             WriteLine($"typedef {result};");
 

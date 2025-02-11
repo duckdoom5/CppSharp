@@ -112,7 +112,7 @@ namespace CppSharp.Generators.CLI
                     Type = pointer
                 };
 
-                return typeMap.SignatureType(typePrinterContext).Visit(this);
+                return (TypePrinterResult)typeMap.SignatureType(typePrinterContext).Visit(this);
             }
 
             var pointee = pointer.Pointee.Desugar();
@@ -135,7 +135,7 @@ namespace CppSharp.Generators.CLI
                 // Skip one indirection if passed by reference
                 bool isRefParam = Parameter != null && (Parameter.IsOut || Parameter.IsInOut);
                 if (isRefParam)
-                    return pointer.QualifiedPointee.Visit(this);
+                    return (TypePrinterResult)pointer.QualifiedPointee.Visit(this);
 
                 if (pointee.IsPrimitiveType(PrimitiveType.Void))
                     return "::System::IntPtr";
@@ -159,7 +159,7 @@ namespace CppSharp.Generators.CLI
                 return $"{typeName}*";
             }
 
-            return pointer.QualifiedPointee.Visit(this);
+            return (TypePrinterResult)pointer.QualifiedPointee.Visit(this);
         }
 
         public override TypePrinterResult VisitBuiltinType(BuiltinType builtin, TypeQualifiers quals)
@@ -227,7 +227,7 @@ namespace CppSharp.Generators.CLI
                 return $"{VisitDeclaration(decl)}^";
             }
 
-            return decl.Type.Visit(this);
+            return (TypePrinterResult)decl.Type.Visit(this);
         }
 
         public override TypePrinterResult VisitTemplateSpecializationType(
@@ -251,7 +251,7 @@ namespace CppSharp.Generators.CLI
             DependentTemplateSpecializationType template, TypeQualifiers quals)
         {
             if (template.Desugared.Type != null)
-                return template.Desugared.Visit(this);
+                return (TypePrinterResult)template.Desugared.Visit(this);
             return string.Empty;
         }
 
@@ -264,7 +264,7 @@ namespace CppSharp.Generators.CLI
         public override TypePrinterResult VisitTemplateParameterSubstitutionType(
             TemplateParameterSubstitutionType param, TypeQualifiers quals)
         {
-            return param.Replacement.Visit(this);
+            return (TypePrinterResult)param.Replacement.Visit(this);
         }
 
         public override TypePrinterResult VisitInjectedClassNameType(
@@ -277,7 +277,7 @@ namespace CppSharp.Generators.CLI
             DependentNameType dependent, TypeQualifiers quals)
         {
             return dependent.Qualifier.Type != null ?
-                dependent.Qualifier.Visit(this).Type : string.Empty;
+                ((TypePrinterResult)dependent.Qualifier.Visit(this)).Type: string.Empty;
         }
 
         public override TypePrinterResult VisitPackExpansionType(
@@ -290,9 +290,9 @@ namespace CppSharp.Generators.CLI
             UnaryTransformType unaryTransformType, TypeQualifiers quals)
         {
             if (unaryTransformType.Desugared.Type != null)
-                return unaryTransformType.Desugared.Visit(this);
+                return (TypePrinterResult)unaryTransformType.Desugared.Visit(this);
 
-            return unaryTransformType.BaseType.Visit(this);
+            return (TypePrinterResult)unaryTransformType.BaseType.Visit(this);
         }
 
         public override TypePrinterResult VisitCILType(CILType type, TypeQualifiers quals)

@@ -510,7 +510,7 @@ namespace CppSharp.Generators.CLI
 
             if (pointee is FunctionType)
             {
-                var cppTypeName = pointer.Visit(typePrinter, quals);
+                var cppTypeName = (TypePrinterResult)pointer.Visit(typePrinter, quals);
 
                 return VisitDelegateType(cppTypeName);
             }
@@ -618,7 +618,7 @@ namespace CppSharp.Generators.CLI
                     cppTypeName = "::" + typedef.Declaration.QualifiedOriginalName;
                 else
                 {
-                    cppTypeName = decl.Type.Visit(typePrinter, quals);
+                    cppTypeName = (TypePrinterResult)decl.Type.Visit(typePrinter, quals);
                 }
 
                 VisitDelegateType(cppTypeName);

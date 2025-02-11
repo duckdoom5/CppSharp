@@ -101,7 +101,7 @@ namespace CppSharp.Types
                 {
                     typePrinter.ResolveTypedefs = resolveTypeDefs;
                     typePrinter.PushScope(typePrintScopeKind);
-                    var typeName = type.Visit(typePrinter);
+                    var typeName = (TypePrinterResult)type.Visit(typePrinter);
                     typePrinter.PopScope();
                     if (FindTypeMap(typeName, kind, out typeMap))
                     {

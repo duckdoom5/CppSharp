@@ -52,7 +52,7 @@ namespace CppSharp.Generators.TS
                 return VisitPrimitiveType(PrimitiveType.Null);
 
             if (typedef.Declaration.Type.IsPrimitiveType())
-                return typedef.Declaration.Type.Visit(this);
+                return (TypePrinterResult)typedef.Declaration.Type.Visit(this);
 
             return base.VisitTypedefType(typedef, quals);
         }
@@ -107,7 +107,7 @@ namespace CppSharp.Generators.TS
             if (pointer.IsConstCharString())
                 return VisitPrimitiveType(PrimitiveType.String);
 
-            return base.VisitPointerType(pointer, quals);
+            return (TypePrinterResult)base.VisitPointerType(pointer, quals);
         }
 
         public override TypePrinterResult VisitTagType(TagType tag, TypeQualifiers quals)
@@ -132,7 +132,7 @@ namespace CppSharp.Generators.TS
         {
             var oldParam = Parameter;
             Parameter = param;
-            var result = param.QualifiedType.Visit(this);
+            var result = (TypePrinterResult)param.QualifiedType.Visit(this);
             result.Kind = GeneratorKind.TypeScript;
             Parameter = oldParam;
 

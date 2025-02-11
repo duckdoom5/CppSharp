@@ -110,7 +110,7 @@ namespace CppSharp.Generators.Emscripten
                 };
                 cppTypePrinter.PushContext(TypePrinterContextKind.Native);
 
-                var parameters = ctor.Parameters.Select(p => p.Type.Visit(cppTypePrinter).Type);
+                var parameters = ctor.Parameters.Select(p => ((TypePrinterResult)p.Type.Visit(cppTypePrinter)).Type);
                 WriteLineIndent($".constructor<{string.Join(", ", parameters)}>()");
 
                 overloadCheck.Add(ctor.Parameters.Count);

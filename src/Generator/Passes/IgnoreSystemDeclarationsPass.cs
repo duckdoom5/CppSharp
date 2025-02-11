@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using CppSharp.AST;
 using CppSharp.AST.Extensions;
+using CppSharp.Types;
 
 namespace CppSharp.Passes
 {
@@ -11,6 +12,13 @@ namespace CppSharp.Passes
                 VisitFlags.NamespaceEnums | VisitFlags.ClassTemplateSpecializations | 
                 VisitFlags.NamespaceTemplates | VisitFlags.NamespaceTypedefs |
                 VisitFlags.NamespaceFunctions | VisitFlags.NamespaceVariables);
+
+        private static bool IsPrivateStdDecl(Declaration decl)
+        {
+            return decl.OriginalName.Length > 2 &&
+                   decl.OriginalName[0] == '_' &&
+                   decl.OriginalName[1] != '_';
+        }
 
         public override bool VisitTranslationUnit(TranslationUnit unit)
         {
@@ -25,13 +33,53 @@ namespace CppSharp.Passes
             return true;
         }
 
-        public override bool VisitClassDecl(Class @class)
+        public override bool VisitDeclaration(Declaration decl)
         {
-            if (!base.VisitClassDecl(@class) || Options.IsCLIGenerator)
+            if (!base.VisitDeclaration(decl))
                 return false;
 
-            if (!@class.TranslationUnit.IsSystemHeader)
+            // Only check system types
+            if (!decl.TranslationUnit.IsSystemHeader)
                 return false;
+
+            // Names of template parameters are irrelevant
+            /*if (decl is TypeTemplateParameter or NonTypeTemplateParameter)
+                return true;
+
+            // Ignore std implementation detail classes
+            if (IsPrivateStdDecl(decl))
+            {
+                decl.ExplicitlyIgnore();
+                return true;
+            }*/
+
+            // Ignore std decls in `detail` namespace
+            if (decl.QualifiedOriginalName.Contains("::detail"))
+            {
+                decl.ExplicitlyIgnore();
+                return false;
+            }
+
+            return true;
+        }
+
+        public override bool VisitClassDecl(Class @class)
+        {
+            if (!base.VisitClassDecl(@class) || @class.Ignore)
+                return false;
+
+            // Ignore std implementation detail classes
+            if (IsPrivateStdDecl(@class))
+            {
+                @class.ExplicitlyIgnore();
+                return false;
+            }
+
+            if (Options.IsCLIGenerator)
+                return false;
+
+            if (Context.TypeMaps.FindTypeMap(@class, out TypeMap mappedType) && !mappedType.IsIgnored)
+                return true;
 
             @class.ExplicitlyIgnore();
 
@@ -39,7 +87,12 @@ namespace CppSharp.Passes
                 return false;
 
             foreach (var specialization in @class.Specializations.Where(s => s.IsGenerated))
+            {
+                if (Context.TypeMaps.FindTypeMap(specialization, out mappedType) && !mappedType.IsIgnored)
+                    continue;
+
                 specialization.ExplicitlyIgnore();
+            }
 
             // we only need a few members for marshalling so strip the rest
             switch (@class.Name)
@@ -71,9 +124,11 @@ namespace CppSharp.Passes
                         specialization.GenerationKind = GenerationKind.Generate;
                         InternalizeSpecializationsInFields(specialization);
                     }
-                    break;
+                    return true;
             }
-            return true;
+
+            Diagnostics.Warning("Ignoring unsupported std type: {0}", @class.QualifiedName);
+            return false;
         }
 
         public override bool VisitEnumDecl(Enumeration @enum)
@@ -81,8 +136,11 @@ namespace CppSharp.Passes
             if (!base.VisitEnumDecl(@enum))
                 return false;
 
-            if (@enum.TranslationUnit.IsSystemHeader)
+            if (IsPrivateStdDecl(@enum))
+            {
                 @enum.ExplicitlyIgnore();
+                return false;
+            }
 
             return true;
         }
@@ -92,30 +150,52 @@ namespace CppSharp.Passes
             if (!base.VisitFunctionDecl(function))
                 return false;
 
-            if (function.TranslationUnit.IsSystemHeader)
+            if (IsPrivateStdDecl(function))
+            {
                 function.ExplicitlyIgnore();
+                return false;
+            }
 
             return true;
         }
-
-        public override bool VisitTypedefDecl(TypedefDecl typedef)
+        
+        public override bool VisitTypedefNameDecl(TypedefNameDecl typedef)
         {
-            if (!base.VisitTypedefDecl(typedef))
+            if (!base.VisitTypedefNameDecl(typedef))
                 return false;
 
-            if (typedef.TranslationUnit.IsSystemHeader)
+            if (IsPrivateStdDecl(typedef))
+            {
                 typedef.ExplicitlyIgnore();
+                return false;
+            }
 
             return true;
         }
 
         public override bool VisitVariableDecl(Variable variable)
         {
-            if (!base.VisitDeclaration(variable))
+            if (!base.VisitVariableDecl(variable))
                 return false;
 
-            if (variable.TranslationUnit.IsSystemHeader)
+            if (IsPrivateStdDecl(variable))
+            {
                 variable.ExplicitlyIgnore();
+                return false;
+            }
+
+            return true;
+        }
+        public override bool VisitParameterDecl(Parameter parameter)
+        {
+            if (!base.VisitParameterDecl(parameter))
+                return false;
+
+            if (IsPrivateStdDecl(parameter))
+            {
+                parameter.ExplicitlyIgnore();
+                return false;
+            }
 
             return true;
         }

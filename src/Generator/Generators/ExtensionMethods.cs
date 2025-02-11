@@ -54,22 +54,16 @@ namespace CppSharp.Generators
         public static Type GetMappedType(this Type type, TypeMapDatabase typeMaps,
             GeneratorKind generatorKind)
         {
-            TypeMap typeMap;
-            if (typeMaps.FindTypeMap(type, out typeMap))
+            if (!typeMaps.FindTypeMap(type, generatorKind, out TypeMap typeMap) || typeMap.IsIgnored) 
+                return type.Desugar();
+
+            var typePrinterContext = new TypePrinterContext
             {
-                var typePrinterContext = new TypePrinterContext
-                {
-                    Kind = TypePrinterContextKind.Managed,
-                    Type = typeMap.Type
-                };
+                Kind = TypePrinterContextKind.Managed,
+                Type = typeMap.Type
+            };
 
-                if (generatorKind == GeneratorKind.CLI || generatorKind == GeneratorKind.CSharp)
-                {
-                    return typeMap.SignatureType(typePrinterContext).Desugar();
-                }
-            }
-
-            return type.Desugar();
+            return typeMap.SignatureType(typePrinterContext).Desugar();
         }
 
         public static string GetIncludePath(this DriverOptions driverOptions, TranslationUnit translationUnit)

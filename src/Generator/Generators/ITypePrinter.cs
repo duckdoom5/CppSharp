@@ -56,19 +56,17 @@ namespace CppSharp.AST
                 return string.Join(", ", template.Parameters.Select(p => p.Name));
             }
 
-            var type = Type.Desugar();
+            var plainType = Type.SkipPointerRefs();
             IEnumerable<TemplateArgument> templateArgs;
-            var templateSpecializationType = type as TemplateSpecializationType;
-            if (templateSpecializationType != null)
+            if (plainType is TemplateSpecializationType templateSpecializationType)
                 templateArgs = templateSpecializationType.Arguments;
             else
             {
-                var declaration = ((TagType)type).Declaration;
-                var specialization = declaration as ClassTemplateSpecialization;
-                if (specialization == null)
-                    return string.Join(", ",
-                        ((Class)declaration).TemplateParameters.Select(t => t.Name));
-                templateArgs = ((ClassTemplateSpecialization)declaration).Arguments;
+                var declaration = ((TagType)plainType).Declaration;
+                if (declaration is not ClassTemplateSpecialization specialization)
+                    return string.Join(", ", ((Class)declaration).TemplateParameters.Select(t => t.Name));
+
+                templateArgs = specialization.Arguments;
             }
 
             var paramsList = new List<string>();
@@ -76,7 +74,7 @@ namespace CppSharp.AST
             {
                 var argType = arg.Type.Type.IsPointerToPrimitiveType()
                     ? new CILType(typeof(System.IntPtr))
-                    : arg.Type.Type;
+                    : arg.Type.Type.Desugar();
                 paramsList.Add(argType.ToString());
             }
 

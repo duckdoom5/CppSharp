@@ -1,9 +1,9 @@
 #include "../Tests.h"
 
 
-namespace OverlappingNamespace
-{
-    enum ColorsEnum {
+namespace OverlappingNamespace {
+    enum ColorsEnum
+    {
         white,
         black,
         red,
@@ -14,8 +14,7 @@ namespace OverlappingNamespace
     class DLL_API InBaseLib
     {
     };
-}
-
+} // namespace OverlappingNamespace
 
 
 class DLL_API Base
@@ -49,6 +48,7 @@ class TemplateClass
 public:
     T getField() const;
     void setField(const T& value);
+
 private:
     union
     {
@@ -79,6 +79,7 @@ public:
     private:
         T field;
     };
+
 private:
     union
     {
@@ -96,6 +97,7 @@ public:
     };
     Nested useDependentPointer(const T* t);
     const T& constField() const;
+
 private:
     T* t = new T;
     Nested nested;

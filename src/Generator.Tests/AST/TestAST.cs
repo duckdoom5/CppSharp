@@ -379,7 +379,7 @@ namespace CppSharp.Generator.Tests.AST
         [Test]
         public void TestMacroLineNumber()
         {
-            Assert.AreEqual(103, AstContext.FindClass("HasAmbiguousFunctions").First().Specifiers.Last().LineNumberStart);
+            Assert.AreEqual(126, AstContext.FindClass("HasAmbiguousFunctions").First().Specifiers.Last().LineNumberStart);
         }
 
         [Test]

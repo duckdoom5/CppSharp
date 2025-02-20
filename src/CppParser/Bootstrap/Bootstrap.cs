@@ -84,6 +84,9 @@ namespace CppSharp
                 "clang/AST/StmtCXX.h",
                 "clang/AST/Expr.h",
                 "clang/AST/ExprCXX.h",
+                "clang/AST/Decl.h",
+                "clang/AST/DeclCXX.h",
+                "clang/AST/Type.h",
             });
 
             module.LibraryDirs.Add(Path.Combine(llvmPath, "lib"));
@@ -95,6 +98,9 @@ namespace CppSharp
 
         public void Preprocess(Driver driver, ASTContext ctx)
         {
+            CodeGeneratorHelpers.CppTypePrinter = new CppTypePrinter(driver.Context);
+            CodeGeneratorHelpers.CppTypePrinter.PushScope(TypePrintScopeKind.Local);
+
             new IgnoreMethodsWithParametersPass { Context = driver.Context }
                 .VisitASTContext(ctx);
             new GetterSetterToPropertyPass { Context = driver.Context }
@@ -117,9 +123,9 @@ namespace CppSharp
             exprCxxUnit.Visit(exprSubclassVisitor);
             ExprClasses = exprSubclassVisitor.Classes;
 
-            CodeGeneratorHelpers.CppTypePrinter = new CppTypePrinter(driver.Context);
-            CodeGeneratorHelpers.CppTypePrinter.PushScope(TypePrintScopeKind.Local);
-
+            // Add new generator calls
+            GenerateDecl(driver.Context);
+            //GenerateType(driver.Context);
             GenerateStmt(driver.Context);
             GenerateExpr(driver.Context);
         }
@@ -128,7 +134,7 @@ namespace CppSharp
         {
         }
 
-        public IEnumerable<Class> ExprClasses;
+        private IEnumerable<Class> ExprClasses;
 
         private void GenerateExpr(BindingContext ctx)
         {
@@ -246,9 +252,99 @@ namespace CppSharp
             managedCodeGen.Process();
             WriteFile(managedCodeGen, Path.Combine(OutputPath, "AST", "StmtVisitor.cs"));
 
-            managedCodeGen = new StmtASTConverterCodeGenerator(ctx, decls, stmtClassEnum);
+            managedCodeGen = new StmtASTConverterCodeGenerator(ctx, decls)
+            {
+                ClassKindEnum = stmtClassEnum
+            };
             managedCodeGen.Process();
             WriteFile(managedCodeGen, Path.Combine(OutputPath, "Parser", "ASTConverter.Stmt.cs"));
+        }
+
+        private void GenerateDecl(BindingContext ctx)
+        {
+            var declBaseUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
+                unit.FileName.Contains("DeclBase.h"));
+            var declUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
+                unit.FileName.Contains("Decl.h"));
+            var declCxxUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
+                unit.FileName.Contains("DeclCXX.h"));
+
+            var declClass = declBaseUnit.FindNamespace("clang").FindClass("Decl");
+            var declSubclassVisitor = new SubclassVisitor(declClass);
+            declBaseUnit.Visit(declSubclassVisitor);
+            declUnit.Visit(declSubclassVisitor);
+            declCxxUnit.Visit(declSubclassVisitor);
+
+            var declarations = declSubclassVisitor.Classes;
+
+            // Validate inheritance for declarations
+            var validator = new InheritanceValidator();
+            validator.ValidateInheritance(declarations);
+
+            // Write the native declarations headers
+            var declsCodeGen = new DeclDeclarationsCodeGenerator(ctx, declarations);
+            declsCodeGen.GenerateDeclarations();
+            WriteFile(declsCodeGen, Path.Combine(OutputPath, "CppParser", "Decl.h"));
+
+            var defsCodeGen = new DeclDefinitionsCodeGenerator(ctx, declarations);
+            defsCodeGen.GenerateDefinitions();
+            WriteFile(defsCodeGen, Path.Combine(OutputPath, "CppParser", "Decl.cpp"));
+
+            // Write the native parsing routines
+            var parserCodeGen = new DeclParserCodeGenerator(ctx, declarations);
+            parserCodeGen.GenerateParser();
+            WriteFile(parserCodeGen, Path.Combine(OutputPath, "CppParser", "ParseDecl.cpp"));
+
+            // Write the managed declarations
+            var managedCodeGen = new ManagedParserCodeGenerator(ctx, declarations);
+            managedCodeGen.GenerateDeclarations();
+            WriteFile(managedCodeGen, Path.Combine(OutputPath, "AST", "Decl.cs")); 
+
+            managedCodeGen = new DeclASTConverterCodeGenerator(ctx, declarations);
+            managedCodeGen.Process();
+            WriteFile(managedCodeGen, Path.Combine(OutputPath, "Parser", "ASTConverter.Decl.cs"));
+        }
+
+        private void GenerateType(BindingContext ctx)
+        {
+            var typeUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
+                unit.FileName.Contains("Type.h"));
+            var typeCxxUnit = ctx.ASTContext.TranslationUnits.Find(unit =>
+                unit.FileName.Contains("CXXType.h"));
+
+            var typeBaseClass = typeUnit.FindNamespace("clang").FindClass("Type");
+            var typeSubclassVisitor = new SubclassVisitor(typeBaseClass);
+            typeUnit.Visit(typeSubclassVisitor);
+            typeCxxUnit?.Visit(typeSubclassVisitor);
+
+            var types = typeSubclassVisitor.Classes;
+            
+            // Validate inheritance for types
+            var validator = new InheritanceValidator();
+            validator.ValidateInheritance(types);
+
+            // Write the native declarations headers
+            var declsCodeGen = new TypeDeclarationsCodeGenerator(ctx, types);
+            declsCodeGen.GenerateDeclarations();
+            WriteFile(declsCodeGen, Path.Combine(OutputPath, "CppParser", "Type.h"));
+
+            var defsCodeGen = new TypeDefinitionsCodeGenerator(ctx, types);
+            defsCodeGen.GenerateDefinitions();
+            WriteFile(defsCodeGen, Path.Combine(OutputPath, "CppParser", "Type.cpp"));
+
+            // Write the native parsing routines
+            var parserCodeGen = new TypeParserCodeGenerator(ctx, types);
+            parserCodeGen.GenerateParser();
+            WriteFile(parserCodeGen, Path.Combine(OutputPath, "CppParser", "ParseType.cpp"));
+
+            // Write the managed declarations
+            var managedCodeGen = new ManagedParserCodeGenerator(ctx, types);
+            managedCodeGen.GenerateDeclarations();
+            WriteFile(managedCodeGen, Path.Combine(OutputPath, "AST", "Type.cs"));
+
+            managedCodeGen = new TypeASTConverterCodeGenerator(ctx, types);
+            managedCodeGen.Process();
+            WriteFile(managedCodeGen, Path.Combine(OutputPath, "Parser", "ASTConverter.Type.cs"));
         }
 
         static void CleanupEnumItems(Enumeration exprClassEnum)
@@ -322,7 +418,7 @@ namespace CppSharp
     {
         private static void Check(Declaration decl)
         {
-            if (string.IsNullOrWhiteSpace(decl.Name))
+            if (decl is not TranslationUnit && string.IsNullOrWhiteSpace(decl.Name))
             {
                 decl.ExplicitlyIgnore();
                 return;
@@ -348,17 +444,80 @@ namespace CppSharp
                 decl.ExplicitlyIgnore();
         }
 
+        public override bool VisitDeclaration(Declaration decl)
+        {
+            if (!base.VisitDeclaration(decl) || decl.Ignore)
+                return false;
+
+            Check(decl);
+            return !decl.Ignore;
+        }
+
         public override bool VisitClassDecl(Class @class)
         {
+            if (@class.Ignore)
+                return false;
+
+            //
+            // Types
+            //
+
+            if (CodeGeneratorHelpers.IsAbstractType(@class))
+                @class.IsAbstract = true;
+
+            foreach (var @base in @class.Bases)
+            {
+                if (@base.Class == null)
+                    continue;
+
+                if (@base.Class.Name.Contains("TrailingObjects"))
+                    @base.ExplicitlyIgnore();
+
+                // Handle APInt/APFloat storage in types
+                if (@base.Class.Name == "APIntStorage" || @base.Class.Name == "APFloatStorage")
+                {
+                    foreach (var property in @base.Class.Properties)
+                    {
+                        if (!@class.Properties.Exists(p => p.Name == property.Name))
+                            @class.Properties.Add(property);
+                    }
+                }
+            }
+
+            //
+            // Declarations
+            //
+
+            if (CodeGeneratorHelpers.IsAbstractDecl(@class))
+                @class.IsAbstract = true;
+
+            foreach (var property in @class.Properties)
+            {
+                // TODO: Auto type is incorrectly set to null
+                if (property.Type == null)
+                    property.ExplicitlyIgnore();
+
+                switch (property.Name)
+                {
+                    case "isDeclContextOrDeclContextTemplate":
+                    case "isInvalidDecl":
+                    case "isImplicit":
+                    case "isUsed":
+                    case "isReferenced":
+                    case "isInStdNamespace":
+                        property.ExplicitlyIgnore();
+                        break;
+                }
+            }
+
             //
             // Statements
             //
 
-            if (CodeGeneratorHelpers.IsAbstractStmt(@class))
+            if (CodeGeneratorHelpers.IsAbstractStmt(@class) ||
+                CodeGeneratorHelpers.IsAbstractExpr(@class))
                 @class.IsAbstract = true;
-
-            Check(@class);
-
+            
             foreach (var @base in @class.Bases)
             {
                 if (@base.Class == null)
@@ -429,32 +588,41 @@ namespace CppSharp
                 }
             }
 
-            return base.VisitClassDecl(@class);
+            return base.VisitClassDecl(@class) && !@class.Ignore;
         }
 
         public override bool VisitClassTemplateDecl(ClassTemplate template)
         {
-            Check(template);
             return base.VisitClassTemplateDecl(template);
         }
 
         public override bool VisitTypeAliasTemplateDecl(TypeAliasTemplate template)
         {
-            Check(template);
             return base.VisitTypeAliasTemplateDecl(template);
         }
 
         public override bool VisitProperty(Property property)
         {
+            if (!base.VisitProperty(property))
+                return false;
+
             if (property.Name == "stripLabelLikeStatements")
                 property.ExplicitlyIgnore();
 
-            return base.VisitProperty(property);
+            var typeName = ((TypePrinterResult)property.Type.Visit(CodeGeneratorHelpers.CppTypePrinter)).Type;
+
+            // Ignore properties that use internal Clang types
+            if (typeName.Contains("DeclContext") || 
+                typeName.Contains("ASTContext") ||
+                typeName.Contains("TypeLoc"))
+                property.ExplicitlyIgnore();
+
+            return true;
         }
 
         public override bool VisitEnumDecl(Enumeration @enum)
         {
-            if (AlreadyVisited(@enum))
+            if (!base.VisitEnumDecl(@enum))
                 return false;
 
             if (@enum.Name == "APFloatSemantics")
@@ -467,7 +635,7 @@ namespace CppSharp
 
             RemoveEnumItemsPrefix(@enum);
 
-            return base.VisitEnumDecl(@enum);
+            return true;
         }
 
         private void RemoveEnumItemsPrefix(Enumeration @enum)
@@ -752,15 +920,16 @@ namespace CppSharp
         }
     }
 
-    class ASTConverterCodeGenerator : ManagedParserCodeGenerator
+    internal abstract class ASTConverterCodeGenerator : ManagedParserCodeGenerator
     {
-        readonly Enumeration StmtClassEnum;
+        public abstract string BaseTypeName { get; }
+        public abstract Enumeration ClassKindEnum { get; init; }
+        public string ParamName => BaseTypeName.ToLowerInvariant();
 
-        public ASTConverterCodeGenerator(BindingContext context,
-            IEnumerable<Declaration> declarations, Enumeration stmtClassEnum)
+        protected ASTConverterCodeGenerator(BindingContext context,
+            IEnumerable<Declaration> declarations)
             : base(context, declarations)
         {
-            StmtClassEnum = stmtClassEnum;
         }
 
         public override void Process()
@@ -783,32 +952,29 @@ namespace CppSharp
             UnindentAndWriteCloseBrace();
         }
 
-        public virtual string BaseTypeName { get; }
-
-        public string ParamName => BaseTypeName.ToLowerInvariant();
+        public abstract bool IsAbstractClassKind(Class kind);
 
         private void GenerateVisitor()
         {
             var comment = new RawComment
             {
-                BriefText = "Implements the visitor pattern for the generated" +
-                    $" {BaseTypeName.ToLowerInvariant()} bindings.\n"
+                BriefText = $"Implements the visitor pattern for the generated {ParamName} bindings.\n"
             };
 
             GenerateComment(comment);
 
-            WriteLine($"public abstract class {BaseTypeName}Visitor<TRet> where TRet : class");
+            WriteLine($"public abstract class {BaseTypeName}Visitor<TRet>");
+            WriteLine("    where TRet : class");
             WriteOpenBraceAndIndent();
 
-            var classes = Declarations.OfType<Class>().Select(@class => @class.Name)
-                .Where(@class => !IsAbstractStmt(@class));
-
+            var classes = Declarations
+                .OfType<Class>()
+                .Where(@class => !IsAbstractClassKind(@class))
+                .Select(@class => @class.Name);
+            
             foreach (var className in classes)
-            {
-                WriteLine("public abstract TRet Visit{0}({0} {1});",
-                    className, ParamName);
-            }
-
+                WriteLine("public abstract TRet Visit{0}({0} {1});", className, ParamName);
+            
             NewLine();
             WriteLine($"public virtual TRet Visit(Parser.AST.{BaseTypeName} {ParamName})");
             WriteOpenBraceAndIndent();
@@ -817,16 +983,11 @@ namespace CppSharp
             WriteLineIndent("return default(TRet);");
             NewLine();
 
+            // TODO: .StmtClass
             WriteLine($"switch({ParamName}.StmtClass)");
             WriteOpenBraceAndIndent();
 
-            var enumItems = StmtClassEnum != null ?
-                StmtClassEnum.Items.Where(item => item.IsGenerated)
-                    .Select(item => RemoveFromEnd(item.Name, "Class"))
-                    .Where(@class => !IsAbstractStmt(@class))
-                    : new List<string>();
-
-            GenerateSwitchCases(StmtClassEnum != null ? enumItems : classes);
+            GenerateSwitchCases(classes);
 
             UnindentAndWriteCloseBrace();
             UnindentAndWriteCloseBrace();
@@ -842,8 +1003,9 @@ namespace CppSharp
 
                 WriteLine($"var _{ParamName} = {className}.__CreateInstance({ParamName}.__Instance);");
 
-                var isExpression = !Declarations.OfType<Class>()
-                    .Where(c => c.Name == className).Any();
+                var isExpression = Declarations
+                    .OfType<Class>()
+                    .All(c => c.Name != className);
 
                 if (isExpression)
                     WriteLine($"return VisitExpression(_{ParamName} as Expr) as TRet;");
@@ -866,7 +1028,7 @@ namespace CppSharp
 
             foreach (var @class in Declarations.OfType<Class>())
             {
-                if (IsAbstractStmt(@class))
+                if (IsAbstractClassKind(@class))
                     continue;
 
                 PushBlock();
@@ -971,26 +1133,38 @@ namespace CppSharp
         }
     }
 
-    class StmtASTConverterCodeGenerator : ASTConverterCodeGenerator
+    internal class StmtASTConverterCodeGenerator : ASTConverterCodeGenerator
     {
-        public StmtASTConverterCodeGenerator(BindingContext context,
-            IEnumerable<Declaration> declarations, Enumeration stmtClassEnum)
-            : base(context, declarations, stmtClassEnum)
+        public StmtASTConverterCodeGenerator(BindingContext context, IEnumerable<Declaration> declarations)
+            : base(context, declarations)
         {
         }
 
         public override string BaseTypeName => "Stmt";
+
+        public override Enumeration ClassKindEnum { get; init; }
+
+        public override bool IsAbstractClassKind(Class kind)
+        {
+            return CodeGeneratorHelpers.IsAbstractStmt(kind);
+        }
     }
 
-    class ExprASTConverterCodeGenerator : ASTConverterCodeGenerator
+    internal class ExprASTConverterCodeGenerator : ASTConverterCodeGenerator
     {
-        public ExprASTConverterCodeGenerator(BindingContext context,
-            IEnumerable<Declaration> declarations)
-            : base(context, declarations, null)
+        public ExprASTConverterCodeGenerator(BindingContext context, IEnumerable<Declaration> declarations)
+            : base(context, declarations)
         {
         }
 
         public override string BaseTypeName => "Expr";
+
+        public override Enumeration ClassKindEnum { get; init; } = null;
+
+        public override bool IsAbstractClassKind(Class kind)
+        {
+            return IsAbstractExpr(kind);
+        }
     }
 
     #endregion
@@ -1173,7 +1347,7 @@ namespace CppSharp
             return true;
         }
 
-        private void GenerateMemberInits(Class @class)
+        internal void GenerateMemberInits(Class @class)
         {
             foreach (var property in @class.Properties)
             {
@@ -1361,6 +1535,18 @@ namespace CppSharp
             {
                 walkMethod = "WalkStatement";
             }
+            else if (iteratorTypeName.Contains("Attr"))
+            {
+                walkMethod = "WalkDeclaration";
+            }
+            else if (iteratorTypeName.Contains("CXXBaseSpecifier"))
+            {
+                walkMethod = "WalkDeclaration";
+            }
+            else if (iteratorTypeName.Contains("CXXCtorInitializer"))
+            {
+                walkMethod = "WalkDeclaration";
+            }
             else
             {
                 throw new NotImplementedException();
@@ -1541,6 +1727,11 @@ namespace CppSharp
         {
             return true;
         }
+        
+        public override bool VisitFunctionTemplateDecl(FunctionTemplate function)
+        {
+            return true;
+        }
 
         public bool IsInheritedClass(Class @class)
         {
@@ -1558,541 +1749,6 @@ namespace CppSharp
         }
     }
 
-    static class CodeGeneratorHelpers
-    {
-        internal static CppTypePrinter CppTypePrinter;
-
-        public static bool IsAbstractStmt(Class @class) => IsAbstractStmt(@class.Name);
-
-        public static bool IsAbstractStmt(string className) =>
-            className is "Stmt" 
-                or "ValueStmt" 
-                or "NoStmt" 
-                or "SwitchCase" 
-                or "AsmStmt" 
-                or "Expr" 
-                or "FullExpr" 
-                or "CastExpr" 
-                or "ExplicitCastExpr" 
-                or "AbstractConditionalOperator" 
-                or "CXXNamedCastExpr" 
-                or "OverloadExpr" 
-                or "CoroutineSuspendExpr";
-
-        public static bool SkipProperty(Property property, bool skipBaseCheck = false)
-        {
-            if (!property.IsGenerated)
-                return true;
-
-            if (property.Access != AccessSpecifier.Public)
-                return true;
-
-            var @class = property.Namespace as Class;
-
-            if (!skipBaseCheck)
-            {
-                if (@class.GetBaseProperty(property) != null)
-                    return true;
-            }
-
-            if ((property.Name == "beginLoc" || property.Name == "endLoc") &&
-                @class.Name != "Stmt")
-                return true;
-
-            switch (property.Name)
-            {
-                case "stmtClass":
-                case "stmtClassName":
-                    return true;
-                case "isOMPStructuredBlock":
-                    return true;
-            }
-
-            var typeName = property.Type.Visit(CppTypePrinter).Type;
-
-            //
-            // Statement properties.
-            //
-
-            if (typeName.Contains("LabelDecl") ||
-                typeName.Contains("VarDecl") ||
-                typeName.Contains("Token") ||
-                typeName.Contains("CapturedDecl") ||
-                typeName.Contains("CapturedRegionKind") ||
-                typeName.Contains("RecordDecl") ||
-                typeName.Contains("StringLiteral") ||
-                typeName.Contains("SwitchCase") ||
-                typeName.Contains("CharSourceRange") ||
-                typeName.Contains("NestedNameSpecifierLoc") ||
-                typeName.Contains("DeclarationNameInfo") ||
-                typeName.Contains("DeclGroupRef"))
-                return true;
-
-            //
-            // Expression properties.
-            //
-
-            // CastExpr
-            if (property.Name == "targetUnionField")
-                return true;
-
-            // ShuffleVectorExprClass
-            if (property.Name == "subExprs")
-                return true;
-
-            // InitListExprClass
-            if (property.Name == "initializedFieldInUnion")
-                return true;
-
-            // ParenListExprClass
-            if (property.Name == "exprs" && @class.Name == "ParenListExpr")
-                return true;
-
-            // EvalResult
-            if (typeName.Contains("ExprValueKind") ||
-                typeName.Contains("ExprObjectKind") ||
-                typeName.Contains("ObjC"))
-                return true;
-
-            // DeclRefExpr
-            if (typeName.Contains("ValueDecl") ||
-                typeName.Contains("NestedNameSpecifier") ||
-                typeName.Contains("TemplateArgumentLoc"))
-                return true;
-
-            // FloatingLiteral
-            if (typeName.Contains("APFloatSemantics") ||
-                typeName.Contains("fltSemantics") ||
-                typeName.Contains("APFloat"))
-                return true;
-
-            // OffsetOfExpr
-            // UnaryExprOrTypeTraitExpr
-            // CompoundLiteralExpr
-            // ExplicitCastExpr
-            // ConvertVectorExpr
-            // VAArgExpr
-            if (typeName.Contains("TypeSourceInfo"))
-                return true;
-
-            // MemberExpr
-            if (typeName.Contains("ValueDecl") ||
-                typeName.Contains("DeclAccessPair") ||
-                typeName.Contains("NestedNameSpecifier") ||
-                typeName.Contains("TemplateArgumentLoc"))
-                return true;
-
-            // BinaryOperator
-            if (typeName.Contains("FPOptions"))
-                return true;
-
-            // DesignatedInitExpr
-            // ExtVectorElementExpr
-            if (typeName.Contains("IdentifierInfo"))
-                return true;
-
-            // BlockExpr
-            if (typeName.Contains("BlockDecl"))
-                return true;
-
-            // ArrayInitLoopExpr
-            if (typeName.Contains("APInt"))
-                return true;
-
-            // MemberExpr
-            if (typeName.Contains("BlockExpr") ||
-                typeName.Contains("FunctionProtoType"))
-                return true;
-
-            //
-            // C++ expression properties.
-            //
-
-            // MSPropertyRefExpr
-            if (typeName.Contains("MSPropertyDecl"))
-                return true;
-
-            // CXXBindTemporaryExpr
-            if (typeName.Contains("CXXTemporary"))
-                return true;
-
-            // CXXConstructExpr
-            // CXXInheritedCtorInitExpr
-            if (typeName.Contains("CXXConstructorDecl") ||
-                typeName.Contains("ConstructionKind"))
-                return true;
-
-            // CXXInheritedCtorInitExpr
-            if (typeName.Contains("LambdaCaptureDefault") ||
-                typeName.Contains("TemplateParameterList"))
-                return true;
-
-            // CXXNewExpr
-            if (property.Name == "placementArgs")
-                return true;
-
-            // TypeTraitExpr
-            if (typeName == "TypeTrait")
-                return true;
-
-            // ArrayTypeTraitExpr
-            if (typeName.Contains("ArrayTypeTrait"))
-                return true;
-
-            // ExpressionTraitExpr
-            if (typeName.Contains("ExpressionTrait"))
-                return true;
-
-            // OverloadExpr
-            // DependentScopeDeclRefExpr
-            // UnresolvedMemberExpr
-            if (typeName.Contains("DeclarationName"))
-                return true;
-            
-            // SubstNonTypeTemplateParmExpr
-            // SubstNonTypeTemplateParmPackExpr
-            if (typeName.Contains("NonTypeTemplateParmDecl"))
-                return true;
-
-            // MaterializeTemporaryExpr
-            if (typeName.Contains("StorageDuration"))
-                return true;
-
-            // General properties.
-            if (typeName.Contains("_iterator") ||
-                typeName.Contains("_range"))
-                return true;
-
-            if (typeName.Contains("ArrayRef"))
-                return true;
-
-            // AtomicExpr
-            if (typeName.Contains("unique_ptr<AtomicScopeModel, default_delete<AtomicScopeModel>>"))
-                return true;
-
-            if (typeName.Contains("Expr**"))
-                return true;
-
-            // GenericSelectionExpr
-            if (typeName.Contains("AssociationIteratorTy"))
-                return true;
-
-            // CXXRewrittenBinaryOperator
-            if (typeName.Contains("DecomposedForm"))
-                return true;
-            
-            // ConstantExpr (TODO: Fix this properly)
-            if (property.Name.Contains("resultAsAP") ||
-                property.Name.Contains("aPValueResult") ||
-                property.Name.Contains("resultAPValueKind"))
-                return true;
-
-            return false;
-        }
-
-        public static bool SkipMethod(Method method)
-        {
-            if (method.Ignore)
-                return true;
-
-            var @class = method.Namespace as Class;
-            if (@class.GetBaseMethod(method) != null)
-                return true;
-
-            if (method.Name == "children")
-                return true;
-
-            // CastExpr
-            if (method.Name == "path")
-                return true;
-
-            // CXXNewExpr
-            if (method.Name == "placement_arguments" && method.IsConst)
-                return true;
-
-            var typeName = method.ReturnType.Visit(CppTypePrinter).Type;
-            if (typeName.Contains("const"))
-                return true;
-
-            if (!typeName.Contains("range"))
-                return true;
-
-            // OverloadExpr
-            if (typeName.Contains("UnresolvedSet"))
-                return true;
-
-            // LambdaExpr
-            if (method.Name == "captures")
-                return true;
-
-            var iteratorType = GetIteratorType(method);
-            string iteratorTypeName = GetIteratorTypeName(iteratorType, CppTypePrinter);
-            if (iteratorTypeName.Contains("LambdaCapture"))
-                return true;
-
-            // GenericSelectionExpr
-            if (iteratorTypeName.Contains("AssociationIteratorTy"))
-                return true;
-
-            return false;
-        }
-
-        public static string GetQualifiedName(Declaration decl,
-            TypePrinter typePrinter)
-        {
-            typePrinter.PushScope(TypePrintScopeKind.Qualified);
-            var qualifiedName = decl.Visit(typePrinter).Type;
-            typePrinter.PopScope();
-
-            qualifiedName = CleanClangNamespaceFromName(qualifiedName);
-
-            if (qualifiedName.Contains("ExprDependenceScope"))
-                qualifiedName = qualifiedName
-                    .Replace("ExprDependenceScope" + (typePrinter is CppTypePrinter ? "::" : ".")
-                        , "");
-
-            else if (qualifiedName.Contains("Semantics"))
-                qualifiedName = qualifiedName.Replace(
-                    typePrinter is CppTypePrinter ? "llvm::APFloatBase::Semantics" : "llvm.APFloatBase.Semantics"
-                , "FloatSemantics");
-
-            return qualifiedName;
-        }
-
-        public static string GetQualifiedName(Declaration decl) =>
-            GetQualifiedName(decl, CppTypePrinter);
-
-        private static string CleanClangNamespaceFromName(string qualifiedName)
-        {
-            qualifiedName = qualifiedName.StartsWith("clang::") ?
-                qualifiedName.Substring("clang::".Length) : qualifiedName;
-
-            qualifiedName = qualifiedName.StartsWith("clang.") ?
-                qualifiedName.Substring("clang.".Length) : qualifiedName;
-
-            return qualifiedName;
-        }
-
-        public static string GetDeclName(Declaration decl, GeneratorKind kind)
-        {
-            string name = decl.Name;
-
-            if (kind == GeneratorKind.CPlusPlus)
-            {
-                if (Generators.C.CCodeGenerator.IsReservedKeyword(name))
-                    name = $"_{name}";
-            }
-            else if (kind == GeneratorKind.CSharp)
-            {
-                bool hasConflict = false;
-                switch (name)
-                {
-                    case "identKind":
-                    case "literalOperatorKind":
-                    case "resultStorageKind":
-                    case "aDLCallKind":
-                    case "initializationStyle":
-                    case "capturedStmt":
-                        hasConflict = true;
-                        break;
-                }
-
-                if (!hasConflict)
-                    name = CSharpSources.SafeIdentifier(
-                        CaseRenamePass.ConvertCaseString(decl,
-                            RenameCasePattern.UpperCamelCase));
-            }
-            else throw new NotImplementedException();
-
-            return name;
-        }
-
-        public static string GetDeclName(Declaration decl)
-        {
-            return GetDeclName(decl, GeneratorKind.CPlusPlus);
-        }
-
-        public static AST.Type GetDeclType(AST.Type type,
-            TypePrinter typePrinter)
-        {
-            var qualifiedType = new QualifiedType(type);
-            if (qualifiedType.Type.IsPointerTo(out TagType tagType))
-                qualifiedType = qualifiedType.StripConst();
-
-            var typeName = qualifiedType.Type.Visit(typePrinter).Type;
-            if (typeName.Contains("StringRef") || typeName.Contains("string"))
-                type = new BuiltinType(PrimitiveType.String);
-
-            return type;
-        }
-
-        public static string GetDeclTypeName(ITypedDecl decl) =>
-            GetDeclTypeName(decl.Type, CppTypePrinter);
-
-        public static string GetDeclTypeName(AST.Type type,
-            TypePrinter typePrinter)
-        {
-            var declType = GetDeclType(type, typePrinter);
-            var typeResult = declType.Visit(typePrinter);
-
-            if (typeResult.Type.Contains("MSGuidDecl"))
-                return typePrinter is CppTypePrinter 
-                    ? "std::string" : "string";
-           
-            var typeName = typeResult.ToString();
-            typeName = CleanClangNamespaceFromName(typeName);
-
-            if (typeName.Contains("QualType"))
-                typeName = "QualifiedType";
-            else if (typeName.Contains("UnaryOperator::Opcode"))
-                typeName = "UnaryOperatorKind";
-            else if (typeName.Contains("BinaryOperator::Opcode"))
-                typeName = "BinaryOperatorKind";
-            
-            else if (typeName.Contains("Semantics"))
-                typeName = "FloatSemantics";
-
-            else if (typeName.Contains("optional"))
-            {
-                if (typePrinter is CppTypePrinter)
-                {
-                    typeName = "std::" + typeName;
-                }
-                else
-                {
-                    var optType = (declType as TemplateSpecializationType)!.Arguments[0].Type;
-                    typeResult = optType.Visit(typePrinter);
-                    typeName = $"{typeResult}?";
-                }
-            }
-
-            string className = null;
-            if (typeName.Contains("FieldDecl"))
-                className = "Field";
-            else if (typeName.Contains("NamedDecl"))
-                className = "Declaration";
-            else if (typeName.Contains("CXXMethodDecl"))
-                className = "Method";
-            else if (typeName.Contains("FunctionDecl"))
-                className = "Function";
-            else if (typeName.Contains("FunctionTemplateDecl"))
-                className = "FunctionTemplate";
-            else if (typeName == "Decl" || typeName == "Decl*")
-                className = "Declaration";
-
-            if (className != null)
-                return (typePrinter is CppTypePrinter) ?
-                 $"{className}*" : className;
-
-            return typeName;
-        }
-
-        public static AST.Type GetIteratorType(Method method)
-        {
-            var retType = method.ReturnType.Type;
-
-            TemplateSpecializationType templateSpecType;
-            TypedefType typedefType;
-            TypedefNameDecl typedefNameDecl;
-
-            if (retType is TemplateSpecializationType)
-            {
-                templateSpecType = retType as TemplateSpecializationType;
-                typedefType = templateSpecType.Arguments[0].Type.Type as TypedefType;
-                typedefNameDecl = typedefType.Declaration as TypedefNameDecl;
-            }
-            else
-            {
-                typedefType = retType as TypedefType;
-                typedefNameDecl = typedefType.Declaration as TypedefNameDecl;
-                templateSpecType = typedefNameDecl.Type as TemplateSpecializationType;
-                typedefType = templateSpecType.Arguments[0].Type.Type as TypedefType;
-                typedefNameDecl = typedefType.Declaration as TypedefNameDecl;
-                typedefType = typedefNameDecl.Type as TypedefType;
-                if (typedefType != null)
-                    typedefNameDecl = typedefType.Declaration as TypedefNameDecl;
-            }
-
-            var iteratorType = typedefNameDecl.Type;
-            if (iteratorType.IsPointerTo(out PointerType pointee))
-                iteratorType = iteratorType.GetPointee();
-
-            return iteratorType;
-        }
-
-        public static string GetIteratorTypeName(AST.Type iteratorType,
-            TypePrinter typePrinter)
-        {
-            if (iteratorType.IsPointer())
-                iteratorType = iteratorType.GetFinalPointee();
-
-            typePrinter.PushScope(TypePrintScopeKind.Qualified);
-            var iteratorTypeName = iteratorType.Visit(typePrinter).Type;
-            typePrinter.PopScope();
-
-            iteratorTypeName = CleanClangNamespaceFromName(iteratorTypeName);
-
-            if (iteratorTypeName.Contains("ExprIterator"))
-                iteratorTypeName = "Expr";
-            
-            else if (iteratorTypeName.Contains("StmtIterator"))
-                iteratorTypeName = "Stmt";
-
-            else if (iteratorTypeName.Contains("CastIterator"))
-            {
-                if (iteratorType is TypedefType typedefType)
-                    iteratorType = typedefType.Declaration.Type;
-                
-                var templateArg = ((TemplateSpecializationType)iteratorType).Arguments[0];
-                iteratorType = templateArg.Type.Type;
-
-                typePrinter.PushScope(TypePrintScopeKind.Qualified);
-                iteratorTypeName = iteratorType.Visit(typePrinter).Type;
-                typePrinter.PopScope();
-
-                iteratorTypeName = CleanClangNamespaceFromName(iteratorTypeName);
-            }
-
-            if (iteratorTypeName == "Decl")
-                iteratorTypeName = "Declaration";
-
-            if (typePrinter is CppTypePrinter)
-                return $"{iteratorTypeName}*";
-
-            return iteratorTypeName;
-        }
-
-        public static List<Class> GetBaseClasses(Class @class)
-        {
-            var baseClasses = new List<Class>();
-
-            Class currentClass = @class;
-            while (currentClass != null)
-            {
-                baseClasses.Add(currentClass);
-                currentClass = currentClass.HasBaseClass ?
-                    currentClass.BaseClass : null;
-            }
-
-            baseClasses.Reverse();
-            return baseClasses;
-        }
-
-        public static string RemoveFromEnd(string s, string suffix)
-        {
-            return s.EndsWith(suffix) ? s.Substring(0, s.Length - suffix.Length) : s;
-        }
-
-        public static string FirstLetterToUpperCase(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-                throw new ArgumentException("There is no first letter");
-
-            char[] a = s.ToCharArray();
-            a[0] = char.ToUpper(a[0]);
-            return new string(a);
-        }
-    }
-
+    
     #endregion
 }

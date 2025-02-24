@@ -303,7 +303,9 @@ namespace CppSharp.Generators.C
         public override TypePrinterResult VisitInjectedClassNameType(
             InjectedClassNameType injected, TypeQualifiers quals)
         {
-            return injected.Class.Visit(this);
+            var result = injected.Class.Visit(this);
+            result.Type += $"<{injected.InjectedSpecializationType.Visit(this)}>";
+            return result;
         }
 
         public override TypePrinterResult VisitDependentNameType(

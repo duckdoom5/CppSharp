@@ -151,7 +151,7 @@ namespace CppSharp.Passes
             if (decl.TemplatedFunction.IsDependent && !decl.IsExplicitlyGenerated)
             {
                 decl.TemplatedFunction.GenerationKind = GenerationKind.None;
-                Diagnostics.Debug("Decl '{0}' was ignored due to dependent context",
+                Diagnostics.Debug("Function '{0}' was ignored due to dependent context",
                     decl.Name);
                 return true;
             }

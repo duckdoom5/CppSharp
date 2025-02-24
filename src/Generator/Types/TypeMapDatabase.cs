@@ -102,9 +102,21 @@ namespace CppSharp.Types
                 {
                     typePrinter.ResolveTypedefs = resolveTypeDefs;
                     typePrinter.PushScope(typePrintScopeKind);
-                    var typeName = type.Visit(typePrinter);
+                    var typeName = type.Visit(typePrinter).ToString();
                     typePrinter.PopScope();
-                    if (FindTypeMap(typeName, kind, out typeMap))
+
+                    bool isTemplateType = typeName.Contains('<');
+                    string genericTypeName = string.Empty;
+                    if (isTemplateType)
+                    {
+                        var firstChar = typeName.IndexOf('<');
+                        var lastChar = typeName.LastIndexOf('>');
+                        var templateArgs = typeName.Substring(firstChar, lastChar - firstChar + 1);
+                        genericTypeName = typeName.Replace(templateArgs, "<>");
+                    }
+
+                    if (FindTypeMap(typeName, kind, out typeMap) ||
+                        (isTemplateType && FindTypeMap(genericTypeName, kind, out typeMap)))
                     {
                         typeMap.Type = type;
                         typeMaps[type] = typeMap;

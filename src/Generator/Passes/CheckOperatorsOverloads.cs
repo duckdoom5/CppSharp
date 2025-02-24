@@ -43,15 +43,19 @@ namespace CppSharp.Passes
 
         private void CheckInvalidOperators(Class @class)
         {
-            foreach (var @operator in @class.Operators.Where(o => o.IsGenerated))
+            foreach (var @operator in @class.Operators
+                         .Where(o => o.IsGenerated && o.IsNonMemberOperator))
             {
-                if (@operator.IsNonMemberOperator)
-                    continue;
-
-                if (@operator.OperatorKind == CXXOperatorKind.Subscript)
-                    CreateIndexer(@class, @operator);
-                else
-                    CreateOperator(@class, @operator);
+                switch (@operator.OperatorKind)
+                {
+                    case CXXOperatorKind.Subscript:
+                        CreateIndexer(@class, @operator);
+                        break;
+                    case CXXOperatorKind.Conversion 
+                        or CXXOperatorKind.ExplicitConversion:
+                        CreateOperator(@class, @operator);
+                        break;
+                }
             }
         }
 

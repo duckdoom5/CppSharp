@@ -1010,15 +1010,47 @@ bool Parser::IsSupported(const clang::CXXMethodDecl* MD)
 {
     using namespace clang;
 
-    return !c->getSourceManager().isInSystemHeader(MD->getBeginLoc()) ||
-        (isa<CXXConstructorDecl>(MD) && MD->getNumParams() == 0) ||
-        isa<CXXDestructorDecl>(MD) ||
-        (MD->getDeclName().isIdentifier() &&
-         ((MD->getName() == "data" && MD->getNumParams() == 0 && MD->isConst()) ||
-          (MD->getName() == "assign" && MD->getNumParams() == 1 &&
-           MD->parameters()[0]->getType()->isPointerType())) &&
-         supportedStdTypes.find(MD->getParent()->getName().str()) !=
-            supportedStdTypes.end());
+    if (!c->getSourceManager().isInSystemHeader(MD->getBeginLoc()))
+        return true;
+
+    if (isa<CXXConstructorDecl>(MD))
+        return MD->getNumParams() == 0;
+
+    if (isa<CXXDestructorDecl>(MD))
+        return true;
+
+    if (supportedStdTypes.find(MD->getParent()->getName().str()) == supportedStdTypes.end())
+        return false;
+
+    if (MD->getParent()->getName() == "optional")
+        return true; // Support all of optional for now
+
+    if (!MD->getDeclName().isIdentifier())
+        return false;
+
+    switch (MD->getNumParams())
+    {
+        case 0:
+        {
+            if (!MD->isConst())
+                return  false;
+
+            return MD->getName() == "data" ||
+                MD->getName() == "has_value" ||
+                MD->getName() == "value";
+        }
+        case 1:
+        {
+            if (!MD->parameters()[0]->getType()->isPointerType())
+                return false;
+
+            return MD->getName() == "assign";
+        }
+        default:
+        {
+            return false;
+        }
+    }
 }
 
 static RecordArgABI GetRecordArgABI(
@@ -1109,7 +1141,7 @@ void Parser::WalkRecord(const clang::RecordDecl* Record, Class* RC)
     for (auto FD : Record->fields())
         WalkFieldCXX(FD, RC);
 
-    if (c->getSourceManager().isInSystemHeader(Record->getBeginLoc()))
+    if (c->getSourceManager().isInSystemHeader(Record->getBeginLoc()) && Record->getName() != "optional")
     {
         if (supportedStdTypes.find(Record->getName().str()) != supportedStdTypes.end())
         {
@@ -1117,6 +1149,13 @@ void Parser::WalkRecord(const clang::RecordDecl* Record, Class* RC)
             {
                 switch (D->getKind())
                 {
+                case Decl::ClassScopeFunctionSpecialization:
+                case Decl::Function:
+                case Decl::FunctionTemplate:
+                {
+                    WalkDeclaration(D);
+                    break;
+                }
                 case Decl::CXXConstructor:
                 case Decl::CXXDestructor:
                 case Decl::CXXConversion:
@@ -4168,6 +4207,14 @@ Declaration* Parser::WalkDeclaration(const clang::Decl* D)
         Decl = FT;
         break;
     }
+    case Decl::ClassScopeFunctionSpecialization:
+    {
+        auto TD = cast<ClassScopeFunctionSpecializationDecl>(D);
+        auto MD = TD->getSpecialization();
+
+        Decl = WalkMethodCXX(MD);
+        break;
+    }
     case Decl::VarTemplate:
     {
         auto TD = cast<VarTemplateDecl>(D);
@@ -4365,7 +4412,6 @@ Declaration* Parser::WalkDeclaration(const clang::Decl* D)
         break;
     }
     case Decl::BuiltinTemplate:
-    case Decl::ClassScopeFunctionSpecialization:
     case Decl::PragmaComment:
     case Decl::PragmaDetectMismatch:
     case Decl::Empty:

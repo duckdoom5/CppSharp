@@ -25,6 +25,8 @@ namespace CppSharp
             Kind = kind;
             Triple = triple;
             IsGnuCpp11Abi = isGnuCpp11Abi;
+
+            Diagnostics.Level = DiagnosticKind.Debug;
         }
 
         static string GetSourceDirectory(string dir)

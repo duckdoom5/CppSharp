@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using CppSharp.AST;
 using CppSharp.AST.Extensions;
 using CppSharp.Generators;
@@ -16,15 +17,33 @@ namespace CppSharp.Passes
 
         public override bool VisitMethodDecl(Method method)
         {
+            if (method.IsOperator && !method.IsGenerated &&
+                method.Namespace.Name == "optional" &&
+                method.Parameters.Count == 1 && 
+                method.Parameters[0].Type is PointerType &&
+                method.Parameters[0].Type.GetPointee() is TemplateParameterType)
+            {
+                var defaultArg = (method.Parameters[0].Type.GetPointee() as TemplateParameterType)!.Parameter
+                    .DefaultArgument.Type;
+
+                if (defaultArg is TemplateParameterSubstitutionType)
+                {
+
+                    Diagnostics.Warning("Invalid operator overload {0}::{1}({2})",
+                        method.Namespace.Name, method.OperatorKind, defaultArg);
+                }
+            }
+
             if (!base.VisitMethodDecl(method) ||
                 !method.IsOperator || !method.IsGenerated)
                 return false;
 
+            if(!Options.IsCSharpGenerator)
+                return false;
+
             if (!IsValidOperatorOverload(method) || method.IsPure)
             {
-                Diagnostics.Debug("Invalid operator overload {0}::{1}",
-                    method.Namespace.Name, method.OperatorKind);
-                method.ExplicitlyIgnore();
+                method.Name = $"Operator{method.OperatorKind}";
             }
 
             return true;

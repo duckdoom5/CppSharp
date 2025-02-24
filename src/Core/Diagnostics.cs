@@ -140,7 +140,7 @@ namespace CppSharp
             {
                 Console.WriteLine(message);
             }
-            Debug.WriteLine(message);
+            //Debug.WriteLine(message);
         }
 
         public void PushIndent(int level)

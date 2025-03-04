@@ -55,11 +55,11 @@ namespace CppSharp
             Console.WriteLine("Applying bootstrap patch...");
 
             foreach (var filePath in Directory.EnumerateFiles(BootstrapPatchPath,
-                         "*", 
+                         "*",
                          new EnumerationOptions
-                     {
-                        RecurseSubdirectories = true,
-                     }))
+                         {
+                             RecurseSubdirectories = true,
+                         }))
             {
                 var srcPath = filePath.Replace(BootstrapPatchDir, "");
                 File.Copy(filePath, srcPath, true);
@@ -74,7 +74,7 @@ namespace CppSharp
 
             var parserOptions = driver.ParserOptions;
             parserOptions.TargetTriple = Triple;
-            parserOptions.LanguageVersion = LanguageVersion.CPP17_GNU;
+            parserOptions.LanguageVersion = LanguageVersion.CPP20_GNU;
 
             var options = driver.Options;
             options.GeneratorKind = Kind;
@@ -134,7 +134,7 @@ namespace CppSharp
             bool isArm = Triple.Contains("arm");
 
             var headersPath = Platform.IsLinux ? string.Empty :
-                Path.Combine(GetSourceDirectory("build"), "headers", 
+                Path.Combine(GetSourceDirectory("build"), "headers",
                     isArm ? "arm64-linux-gnu" : "x86_64-linux-gnu");
             options.SetupLinux(headersPath);
             options.AddDefines("_GLIBCXX_USE_CXX11_ABI=" + (IsGnuCpp11Abi ? "1" : "0"));

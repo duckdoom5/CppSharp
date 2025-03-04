@@ -57,6 +57,7 @@ namespace CppSharp.AST
         ExclaimEqual,
         LessEqual,
         GreaterEqual,
+        Spaceship,
         AmpAmp,
         PipePipe,
         PlusPlus,

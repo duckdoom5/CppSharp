@@ -1434,6 +1434,8 @@ namespace CppSharp
                     return AST.CXXOperatorKind.LessEqual;
                 case CXXOperatorKind.GreaterEqual:
                     return AST.CXXOperatorKind.GreaterEqual;
+                case CXXOperatorKind.Spaceship:
+                    return AST.CXXOperatorKind.Spaceship;
                 case CXXOperatorKind.AmpAmp:
                     return AST.CXXOperatorKind.AmpAmp;
                 case CXXOperatorKind.PipePipe:

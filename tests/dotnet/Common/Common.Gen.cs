@@ -2,6 +2,7 @@
 using CppSharp.AST;
 using CppSharp.Generators;
 using CppSharp.Generators.CSharp;
+using CppSharp.Parser;
 using CppSharp.Types;
 using CppSharp.Utils;
 
@@ -68,6 +69,7 @@ namespace CppSharp.Tests
 
             driver.Options.Modules[1].OutputNamespace = "CommonTest";
             driver.ParserOptions.UnityBuild = true;
+            driver.ParserOptions.LanguageVersion = LanguageVersion.CPP20_GNU;
         }
 
         public override void SetupPasses(Driver driver)
@@ -92,6 +94,7 @@ namespace CppSharp.Tests
 
         public static void Main(string[] args)
         {
+            Diagnostics.Level = DiagnosticKind.Debug;
             ConsoleDriver.Run(new CommonTestsGenerator(GeneratorKind.CLI));
             ConsoleDriver.Run(new CommonTestsGenerator(GeneratorKind.CSharp));
         }

@@ -56,7 +56,7 @@ namespace CppSharp
             driver.Options.GeneratorKind = GeneratorKind.CSharp;
             driver.Options.DryRun = true;
             driver.ParserOptions.EnableRTTI = true;
-            driver.ParserOptions.LanguageVersion = LanguageVersion.CPP17_GNU;
+            driver.ParserOptions.LanguageVersion = LanguageVersion.CPP20_GNU;
             driver.ParserOptions.SkipLayoutInfo = true;
             driver.ParserOptions.UnityBuild = true;
 

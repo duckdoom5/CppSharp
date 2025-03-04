@@ -457,7 +457,8 @@ AST::Expr* Parser::WalkExpression(const clang::Expr* Expr)
         _S->refersToMatrixElement = S->refersToMatrixElement();
         _S->hasPlaceholderType = S->hasPlaceholderType();
         _S->isIncomplete = S->isIncomplete();
-        _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
+        if (!S->isImplicitAccess())
+            _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
         _S->rowIdx = static_cast<AST::Expr*>(WalkExpression(S->getRowIdx()));
         _S->columnIdx = static_cast<AST::Expr*>(WalkExpression(S->getColumnIdx()));
         _Expr = _S;
@@ -516,7 +517,8 @@ AST::Expr* Parser::WalkExpression(const clang::Expr* Expr)
         _S->isOrdinaryOrBitFieldObject = S->isOrdinaryOrBitFieldObject();
         _S->refersToMatrixElement = S->refersToMatrixElement();
         _S->hasPlaceholderType = S->hasPlaceholderType();
-        _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
+        if (!S->isImplicitAccess())
+            _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
         _S->hasQualifier = S->hasQualifier();
         _S->hasTemplateKeyword = S->hasTemplateKeyword();
         _S->hasExplicitTemplateArgs = S->hasExplicitTemplateArgs();
@@ -1048,7 +1050,8 @@ AST::Expr* Parser::WalkExpression(const clang::Expr* Expr)
         _S->isOrdinaryOrBitFieldObject = S->isOrdinaryOrBitFieldObject();
         _S->refersToMatrixElement = S->refersToMatrixElement();
         _S->hasPlaceholderType = S->hasPlaceholderType();
-        _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
+        if (!S->isImplicitAccess())
+            _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
         _S->updater = static_cast<AST::InitListExpr*>(WalkExpression(S->getUpdater()));
         _Expr = _S;
         break;
@@ -1190,7 +1193,8 @@ AST::Expr* Parser::WalkExpression(const clang::Expr* Expr)
         _S->isOrdinaryOrBitFieldObject = S->isOrdinaryOrBitFieldObject();
         _S->refersToMatrixElement = S->refersToMatrixElement();
         _S->hasPlaceholderType = S->hasPlaceholderType();
-        _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
+        if (!S->isImplicitAccess())
+            _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
         _S->numElements = S->getNumElements();
         _S->containsDuplicateElements = S->containsDuplicateElements();
         _S->isArrow = S->isArrow();
@@ -2218,7 +2222,8 @@ AST::Expr* Parser::WalkExpression(const clang::Expr* Expr)
         _S->isOrdinaryOrBitFieldObject = S->isOrdinaryOrBitFieldObject();
         _S->refersToMatrixElement = S->refersToMatrixElement();
         _S->hasPlaceholderType = S->hasPlaceholderType();
-        _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
+        if (!S->isImplicitAccess())
+            _S->base = static_cast<AST::Expr*>(WalkExpression(S->getBase()));
         _S->hasQualifier = S->hasQualifier();
         _S->isArrow = S->isArrow();
         _S->destroyedType = GetQualifiedType(S->getDestroyedType());

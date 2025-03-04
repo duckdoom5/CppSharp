@@ -55,6 +55,7 @@ namespace CppSharp.Passes
                 // The conversion operators can be overloaded
                 case CXXOperatorKind.Conversion:
                 case CXXOperatorKind.ExplicitConversion:
+                case CXXOperatorKind.Spaceship:
                     return true;
 
                 // The comparison operators can be overloaded if their return type is bool

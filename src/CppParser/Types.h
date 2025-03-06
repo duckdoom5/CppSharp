@@ -27,6 +27,7 @@ namespace CppSharp { namespace CppParser { namespace AST {
         TemplateParameterSubstitution,
         InjectedClassName,
         DependentName,
+        Dependent,
         PackExpansion,
         Builtin,
         UnaryTransform,
@@ -260,6 +261,15 @@ namespace CppSharp { namespace CppParser { namespace AST {
         ~DependentNameType();
         QualifiedType qualifier;
         std::string identifier;
+    };
+
+    class CS_API DependentType : public Type
+    {
+    public:
+        DECLARE_TYPE_KIND(Dependent)
+        ~DependentType();
+
+        QualifiedType qualifier;
     };
 
     class CS_API PackExpansionType : public Type

@@ -1,5 +1,4 @@
 #include "../Tests.h"
-
 // Verifies the header is included when the delegate is defined in a different file
 typedef void (*DelegateInAnotherUnit)();
 

@@ -11,6 +11,7 @@ The supported target languages at present are C# and C++/CLI.
 It can also be used as a library to parse native code into a syntax tree with a rich declaration and type information model.</PackageDescription>
     <PackageReleaseNotes>https://github.com/mono/CppSharp/CHANGELOG.md</PackageReleaseNotes>
     <NoWarn>NU5131</NoWarn>
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   
   <ItemGroup>

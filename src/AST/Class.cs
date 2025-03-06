@@ -169,30 +169,12 @@ namespace CppSharp.AST
             get { return Methods.Any(m => m.SynthKind == FunctionSynthKind.AbstractImplCall); }
         }
 
-        public IEnumerable<Method> Constructors
-        {
-            get
-            {
-                return Methods.Where(
-                    method => method.IsConstructor || method.IsCopyConstructor);
-            }
-        }
+        public IEnumerable<Method> Constructors =>
+            Methods.Where(method => method.IsConstructor || method.IsCopyConstructor || method.IsMoveConstructor);
 
-        public IEnumerable<Method> Destructors
-        {
-            get
-            {
-                return Methods.Where(method => method.IsDestructor);
-            }
-        }
+        public IEnumerable<Method> Destructors => Methods.Where(method => method.IsDestructor);
 
-        public IEnumerable<Method> Operators
-        {
-            get
-            {
-                return Methods.Where(method => method.IsOperator);
-            }
-        }
+        public IEnumerable<Method> Operators => Methods.Where(method => method.IsOperator);
 
         /// <summary>
         /// If this class is a template, this list contains all of its template parameters.

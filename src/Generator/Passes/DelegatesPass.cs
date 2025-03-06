@@ -135,7 +135,7 @@ namespace CppSharp.Passes
         private QualifiedType CheckForDelegate(QualifiedType type,
             DeclarationContext declarationContext, bool @private = false)
         {
-            if (type.Type is TypedefType)
+            if (type.Type is null or TypedefType)
                 return type;
 
             var desugared = type.Type.Desugar();

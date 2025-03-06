@@ -22,6 +22,16 @@
     <ProjectReference Include="$(NativeProjectsDir)\CppSharp.Parser.CLI.vcxproj" Condition="$(IsWindows) AND !$(CI)" />
   </ItemGroup>
 
+  <Target Name="PackCLILibs" AfterTargets="prepack" Condition="'$(RID)' == 'win-x64'">
+    <ItemGroup>
+      <CLILibs Include="$(OutputPath)CppSharp.CppParser.dll" />
+      <CLILibs Include="$(OutputPath)CppSharp.Parser.CLI.dll" />
+      <CLILibs Include="$(OutputPath)Ijwhost.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="$(OutputPath)CppSharp.Parser.CLI.dll" DestinationFolder="$(PackageDir)ref\$(GlobalTargetFramework)" />
+    <Copy SourceFiles="@(CLILibs)" DestinationFolder="$(PackageDir)runtimes\$(RID)\lib\$(GlobalTargetFramework)" />
+  </Target>
+
   <Target Name="PackNativeHeaders" AfterTargets="prepack" Condition="'$(RID)' == 'win-x64'">
     <ItemGroup>
       <ClangHeaders Include="$(OutputPath)lib\**" />
@@ -32,6 +42,7 @@
   <Target Name="PackNativeLibs" AfterTargets="prepack" Condition="'$(Platform)' == 'x64'">
     <ItemGroup>
       <NativeLibs Include="$(OutputPath)$(NativeTargetPrefix)CppSharp.CppParser.$(NativeTargetExt)" />
+      <NativeLibs Include="$(OutputPath)$(NativeTargetPrefix)CppSharp.Parser.CLI.$(NativeTargetExt)" Condition="$(IsWindows)" />
       <NativeLibs Include="$(OutputPath)$(NativeTargetPrefix)Std-symbols.$(NativeTargetExt)" />
     </ItemGroup>
     <Copy SourceFiles="@(NativeLibs)" DestinationFolder="$(PackageDir)runtimes\$(RID)\native" />

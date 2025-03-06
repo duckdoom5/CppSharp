@@ -55,8 +55,9 @@ namespace CppSharp.Passes
                 // The conversion operators can be overloaded
                 case CXXOperatorKind.Conversion:
                 case CXXOperatorKind.ExplicitConversion:
-                case CXXOperatorKind.Spaceship:
                     return true;
+                case CXXOperatorKind.Spaceship:
+                    return false;
 
                 // The comparison operators can be overloaded if their return type is bool
                 case CXXOperatorKind.EqualEqual:
@@ -81,32 +82,32 @@ namespace CppSharp.Passes
                 // Bitwise shift operators can only be overloaded if the second parameter is int
                 case CXXOperatorKind.LessLess:
                 case CXXOperatorKind.GreaterGreater:
+                {
+                    Parameter parameter = @operator.Parameters.Last();
+                    Type type = parameter.Type.Desugar();
+                    var kind = Options.GeneratorKind;
+                    switch (kind)
                     {
-                        Parameter parameter = @operator.Parameters.Last();
-                        Type type = parameter.Type.Desugar();
-                        var kind = Options.GeneratorKind;
-                        switch (kind)
-                        {
-                            case var _ when ReferenceEquals(kind, GeneratorKind.CLI):
-                                return type.IsPrimitiveType(PrimitiveType.Int);
-                            case var _ when ReferenceEquals(kind, GeneratorKind.CSharp):
-                                Types.TypeMap typeMap;
-                                if (Context.TypeMaps.FindTypeMap(type, GeneratorKind.CSharp, out typeMap))
-                                {
-                                    var mappedTo = typeMap.SignatureType(
-                                        new TypePrinterContext
-                                        {
-                                            Parameter = parameter,
-                                            Type = type
-                                        });
-                                    var cilType = mappedTo as CILType;
-                                    if (cilType?.Type == typeof(int))
-                                        return true;
-                                }
-                                break;
-                        }
-                        return false;
+                        case var _ when ReferenceEquals(kind, GeneratorKind.CLI):
+                            return type.IsPrimitiveType(PrimitiveType.Int);
+                        case var _ when ReferenceEquals(kind, GeneratorKind.CSharp):
+                            Types.TypeMap typeMap;
+                            if (Context.TypeMaps.FindTypeMap(type, GeneratorKind.CSharp, out typeMap))
+                            {
+                                var mappedTo = typeMap.SignatureType(
+                                    new TypePrinterContext
+                                    {
+                                        Parameter = parameter,
+                                        Type = type
+                                    });
+                                var cilType = mappedTo as CILType;
+                                if (cilType?.Type == typeof(int))
+                                    return true;
+                            }
+                            break;
                     }
+                    return false;
+                }
 
                 // No parameters means the dereference operator - cannot be overloaded
                 case CXXOperatorKind.Star:

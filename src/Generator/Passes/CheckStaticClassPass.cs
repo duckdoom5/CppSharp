@@ -17,12 +17,12 @@ namespace CppSharp.Passes
             if (!base.VisitDeclaration(decl))
                 return false;
 
-            if (Options.IsCSharpGenerator)
-            {
-                // C# cannot have protected members in static classes.
-                if (IsProtectedClassMember(decl) && decl.IsGenerated)
-                    SetDeclarationAccessToPrivate(decl);
-            }
+            if (!Options.IsCSharpGenerator)
+                return true;
+
+            // C# cannot have protected members in static classes.
+            if (IsProtectedClassMember(decl) && decl.IsGenerated)
+                SetDeclarationAccessToPrivate(decl);
 
             return true;
         }

@@ -281,6 +281,13 @@ namespace CppSharp { namespace CppParser { namespace AST {
 
     DependentNameType::~DependentNameType() {}
 
+    DependentType::DependentType()
+        : Type(TypeKind::Dependent)
+    {
+    }
+
+    DependentType::~DependentType() {}
+
     PackExpansionType::PackExpansionType()
         : Type(TypeKind::PackExpansion)
     {

@@ -154,8 +154,12 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
-        public virtual TypePrinterResult VisitDependentNameType(
-            DependentNameType dependent, TypeQualifiers quals)
+        public virtual TypePrinterResult VisitDependentNameType(DependentNameType dependent, TypeQualifiers quals)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual TypePrinterResult VisitDependentType(DependentType dependent, TypeQualifiers quals)
         {
             throw new NotImplementedException();
         }

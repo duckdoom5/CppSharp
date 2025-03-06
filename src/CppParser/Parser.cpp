@@ -3119,10 +3119,18 @@ Type* Parser::WalkType(clang::QualType QualType, const clang::TypeLoc* TL, bool 
         case clang::Type::Auto:
         {
             auto AT = Type->getAs<AutoType>();
+
             if (AT->isSugared())
-                Ty = WalkType(AT->getCanonicalTypeInternal());
+            {
+                Ty = WalkType(AT->desugar());
+            }
             else
-                return nullptr;
+            {
+                // TODO: Stubbed
+                auto DT = new AST::DependentType();
+                DT->qualifier = GetQualifiedType(AT->getDeducedType(), TL);
+                Ty = DT;
+            }
             break;
         }
         case clang::Type::Decltype:
@@ -3547,6 +3555,7 @@ void Parser::WalkFunction(const clang::FunctionDecl* FD, Function* F)
     auto ReturnType = FD->getReturnType();
     if (FD->isExternallyVisible())
         CompleteIfSpecializationType(ReturnType);
+
     F->returnType = GetQualifiedType(ReturnType, &RTL);
 
     const auto& Mangled = GetDeclMangledName(FD);

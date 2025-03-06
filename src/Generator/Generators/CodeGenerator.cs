@@ -568,6 +568,11 @@ namespace CppSharp.Generators
             throw new NotImplementedException();
         }
 
+        public virtual bool VisitDependentType(DependentType dependent, TypeQualifiers quals)
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual bool VisitPackExpansionType(PackExpansionType packExpansionType, TypeQualifiers quals)
         {
             throw new NotImplementedException();

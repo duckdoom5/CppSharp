@@ -298,7 +298,7 @@ namespace CppSharp.AST
                 case CXXOperatorKind.GreaterEqual: return "operator >=";
 
                 // The spaceship comparison operator cannot be overloaded
-                case CXXOperatorKind.Spaceship: return "operator <=>";
+                case CXXOperatorKind.Spaceship:
 
                 // Assignment operators cannot be overloaded
                 case CXXOperatorKind.PlusEqual:

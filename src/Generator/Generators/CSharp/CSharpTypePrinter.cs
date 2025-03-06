@@ -375,6 +375,13 @@ namespace CppSharp.Generators.CSharp
             return $"{dependent.Qualifier.Visit(this)}.{dependent.Identifier}";
         }
 
+        public override TypePrinterResult VisitDependentType(DependentType dependent, TypeQualifiers quals)
+        {
+            if (dependent.Qualifier.Type == null)
+                return "dynamic";
+            return $"{dependent.Qualifier.Visit(this)}";
+        }
+
         public override TypePrinterResult VisitPackExpansionType(PackExpansionType type,
             TypeQualifiers quals)
         {
@@ -507,8 +514,7 @@ $"[{Context.TargetInfo.LongDoubleWidth}]");
         public override TypePrinterResult VisitClassDecl(Class @class)
         {
             if (ContextKind == TypePrinterContextKind.Native)
-                return $@"{VisitDeclaration(@class.OriginalClass ?? @class)}.{
-                    Helpers.InternalStruct}{Helpers.GetSuffixForInternal(@class)}";
+                return $@"{VisitDeclaration(@class.OriginalClass ?? @class)}.{Helpers.InternalStruct}{Helpers.GetSuffixForInternal(@class)}";
 
             TypePrinterResult printed = VisitDeclaration(@class);
             if (@class.IsTemplate)

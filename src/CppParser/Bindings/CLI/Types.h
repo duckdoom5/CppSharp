@@ -27,6 +27,7 @@ namespace CppSharp
             ref class Declaration;
             ref class DependentNameType;
             ref class DependentTemplateSpecializationType;
+            ref class DependentType;
             ref class FunctionType;
             ref class InjectedClassNameType;
             ref class MemberPointerType;
@@ -75,11 +76,12 @@ namespace CppSharp
                 TemplateParameterSubstitution = 11,
                 InjectedClassName = 12,
                 DependentName = 13,
-                PackExpansion = 14,
-                Builtin = 15,
-                UnaryTransform = 16,
-                UnresolvedUsing = 17,
-                Vector = 18
+                Dependent = 14,
+                PackExpansion = 15,
+                Builtin = 16,
+                UnaryTransform = 17,
+                UnresolvedUsing = 18,
+                Vector = 19
             };
 
             public enum class CallingConvention
@@ -774,6 +776,27 @@ namespace CppSharp
                 {
                     ::System::String^ get();
                     void set(::System::String^);
+                }
+            };
+
+            public ref class DependentType : CppSharp::Parser::AST::Type
+            {
+            public:
+
+                DependentType(class ::CppSharp::CppParser::AST::DependentType* native);
+                DependentType(class ::CppSharp::CppParser::AST::DependentType* native, bool ownNativeInstance);
+                static DependentType^ __CreateInstance(::System::IntPtr native);
+                static DependentType^ __CreateInstance(::System::IntPtr native, bool __ownsNativeInstance);
+                DependentType();
+
+                DependentType(CppSharp::Parser::AST::DependentType^ _0);
+
+                ~DependentType();
+
+                property CppSharp::Parser::AST::QualifiedType^ Qualifier
+                {
+                    CppSharp::Parser::AST::QualifiedType^ get();
+                    void set(CppSharp::Parser::AST::QualifiedType^);
                 }
             };
 

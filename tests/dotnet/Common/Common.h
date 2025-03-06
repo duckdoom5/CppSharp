@@ -5,6 +5,7 @@
 #ifdef _WIN32
 #include <vadefs.h>
 #endif
+#include <cmath>
 #include <string>
 #include <vector>
 #include <memory>
@@ -894,6 +895,107 @@ struct DLL_API Point
     auto operator<=>(const Point&) const = default;
 };
 
+// Test spaceship operator
+template <class T>
+concept IsArithmeticT = std::is_arithmetic_v<T>;
+
+namespace Math {
+
+[[nodiscard]] constexpr static float Sqrt(const float x)
+{ // TODO: Replace with std::sqrt once it is constexpr
+    if (!std::is_constant_evaluated())
+        return std::sqrt(x);
+
+    if (x < 0 || x >= std::numeric_limits<float>::infinity())
+        return std::numeric_limits<float>::quiet_NaN();
+
+    float curr = x;
+    float prev = 0;
+    while (curr != prev)
+    {
+        prev = curr;
+        curr = 0.5f * (curr + x / curr);
+    }
+    return curr;
+}
+
+} // namespace Math
+
+template <class T>
+struct DLL_API Vector3
+{
+    constexpr Vector3() = default;
+    explicit constexpr Vector3(T scalar)
+        : x(scalar)
+        , y(scalar)
+        , z(scalar)
+    {
+    }
+
+    constexpr Vector3(T x, T y, T z)
+        : x(x)
+        , y(y)
+        , z(z)
+    {
+    }
+
+    constexpr bool operator==(const Vector3& other) const
+    {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    constexpr Vector3& operator*=(const Vector3& other)
+    {
+        x *= other.x;
+        y *= other.y;
+        z *= other.z;
+        return *this;
+    }
+
+    template <class R>
+    constexpr auto operator*(const Vector3<R>& other) const
+    {
+        return Vector3<decltype(x * other.x)>{ x * other.x, y * other.y, z * other.z };
+    }
+
+    [[nodiscard]] constexpr T Dot(const Vector3& other) const
+    {
+        return x * other.x + y * other.y + z * other.z;
+    }
+
+    [[nodiscard]] constexpr T SqrMagnitude() const
+        requires std::is_floating_point_v<T>
+    {
+        return Dot(*this);
+    }
+
+    [[nodiscard]] constexpr T Magnitude() const
+        requires std::is_floating_point_v<T>
+    {
+        return Math::Sqrt(SqrMagnitude());
+    }
+
+    constexpr auto& Normalize()
+    {
+        return *this *= 1.0f / Magnitude();
+    }
+
+    T x{ 0 };
+    T y{ 0 };
+    T z{ 0 };
+};
+
+typedef Vector3<float> Vector3f;
+typedef Vector3<double> Vector3d;
+typedef Vector3<int> Vector3i;
+
+struct InstantiateVectorTest
+{
+    Vector3f v3f;
+    Vector3d v3d;
+    Vector3i v3i;
+};
+
 class TestNamingAnonymousTypesInUnion
 {
 public:
@@ -1636,3 +1738,191 @@ extern "C"
     DLL_API void takeConflictName(struct system* self);
     DLL_API struct system freeFunctionReturnByValue();
 } // extern "C"
+
+
+#include <cstdint>
+#include <chrono>
+using uint = uint32_t;
+using uint64 = uint64_t;
+
+
+namespace pix::core {
+using namespace std::chrono_literals;
+
+/// <summary>Class used for retrieving application related time values</summary>
+class Time
+{
+public:
+    /// <summary>This is the time in seconds since the start of the application, and is not constant if called multiple times in a frame</summary>
+    /// <returns>Time since start</returns>
+    static float GetRealTimeSinceStart()
+    {
+        return FSec(Clock::now() - _start).count();
+    }
+
+    /// <summary>The time since the start of the application affected by timescale</summary>
+    /// <returns>Time since start * TimeScale</returns>
+    static float GetTime()
+    {
+        return _scaledTime;
+    }
+
+    /// <summary>The timescale independent time since the start of the application</summary>
+    /// <returns>Time since start</returns>
+    static float GetUnscaledTime()
+    {
+        return _unscaledTime;
+    }
+
+    /// <summary>The time it took to complete the last frame</summary>
+    /// <returns>The delta time</returns>
+    /// <remarks>Affected by TimeScale and max delta time. (Use GetUnscaledDeltaTime() to avoid time scaling and capping)</remarks>
+    static float GetDeltaTime()
+    {
+        return _scaledDeltaTime;
+    }
+
+    /// <summary>The time it took to complete the last frame, not scaled by timescale, and not capped by max delta time</summary>
+    /// <returns>The unscaled delta time</returns>
+    static float GetUnscaledDeltaTime()
+    {
+        return _unscaledDeltaTime;
+    }
+
+    /// <summary>The time last fixed update started (affected by timescale and max delta time)</summary>
+    /// <returns>Time since last fixed update</returns>
+    /// <remarks>Affected by TimeScale and max delta time</remarks>
+    static float GetFixedTime()
+    {
+        return _scaledFixedTime;
+    }
+
+    /// <summary>The interval between two fixed updates</summary>
+    /// <returns>The fixed delta time</returns>
+    /// <remarks>Affected by TimeScale and max delta time. (Use GetUnscaledFixedDeltaTime() to avoid time scaling and capping)</remarks>
+    static float GetFixedDeltaTime()
+    {
+        return _unscaledFixedDeltaTime * _timeScale;
+    }
+
+    /// <summary>The "timescale independent" interval between two fixed updates</summary>
+    /// <returns>The unscaled fixed delta time</returns>
+    static float GetUnscaledFixedDeltaTime()
+    {
+        return _unscaledFixedDeltaTime;
+    }
+
+    /// <summary>Set the time that each fixed update should progress, and therefore the amount of frames per second that fixed update should run at</summary>
+    /// <param name="fixedDeltaTime">Time between fixed updates</param>
+    static void SetFixedDeltaTime(float fixedDeltaTime)
+    {
+        _unscaledFixedDeltaTime = fixedDeltaTime;
+    }
+
+    /// <summary>Returns the scale at which delta time is scaled</summary>
+    /// <returns>The unscaled delta time</returns>
+    static float GetTimeScale()
+    {
+        return _timeScale;
+    }
+
+    /// <summary>Set the scale at which delta time is scaled. Use this to slow down or speed up your
+    /// application.</summary> <param name="scale">The new timescale</param>
+    static void SetTimeScale(float scale)
+    {
+        _timeScale = scale;
+    }
+
+    /// <summary>Returns the amount of frames per second this application runs at</summary>
+    /// <returns>The frames per second</returns>
+    static uint GetFPS()
+    {
+        return _fps;
+    }
+
+    /// <summary>Returns the amount of frames that have been rendered since the start of the application</summary>
+    /// <returns>The frame count</returns>
+    static uint64 GetFrameCount()
+    {
+        return _totalFrameCount;
+    }
+
+    /// <summary>Get the time at which the (before applying timescale) delta time is capped at</summary>
+    /// <returns>The maximum amount a frame can take</returns>
+    static float GetMaxDeltaTime()
+    {
+        return _maxDeltaTime;
+    }
+
+    /// <summary>Set the time at which the delta time (before applying timescale) is capped at</summary>
+    /// <param name="maxDeltaTime">The maximum amount a frame can take</param>
+    static void SetMaxDeltaTime(float maxDeltaTime)
+    {
+        _maxDeltaTime = std::max(maxDeltaTime, _unscaledFixedDeltaTime);
+    }
+
+private:
+    friend class Frame;
+
+    /// <summary>INTERNAL USE ONLY! Start a new frame and update the timer</summary>
+    static void StartFrame()
+    {
+        const Clock::time_point newFrameStart = Clock::now();
+        _unscaledDeltaTime = FSec(newFrameStart - _unscaledFrameStart).count(); // Time since last frame
+        _unscaledFrameStart = newFrameStart;
+
+        _scaledDeltaTime = std::min(_unscaledDeltaTime, _maxDeltaTime) * _timeScale;
+        _scaledTime += _scaledDeltaTime;
+
+        ++_frameCount;
+        ++_totalFrameCount;
+
+        FSec frameCountDelta = newFrameStart - _fpsStart;
+        if (frameCountDelta >= 1s)
+        {
+            _fps = _frameCount;
+            _frameCount = 0;
+            // Account for long pauses, where the application was paused for more than one second
+            _fpsStart += std::chrono::floor<ClockDuration>(frameCountDelta);
+        }
+    }
+
+    /// <summary>Check if a fixed update call should be executed</summary>
+    /// <returns>True if a fixed update call should be executed</returns>
+    static bool IsFixedUpdateBehind()
+    {
+        return _scaledTime - _scaledFixedTime >= _unscaledFixedDeltaTime;
+    }
+
+    /// <summary>INTERNAL USE ONLY! Start a new fixed update loop</summary>
+    static void StartFixedUpdate()
+    {
+        _scaledFixedTime += GetFixedDeltaTime(); // Calculate the start of the new fixed frame
+    }
+
+    using Clock = std::chrono::high_resolution_clock;
+    using ClockDuration = Clock::duration;
+
+    using FSec = std::chrono::duration<float>;
+
+    constexpr static float DefaultDesiredFixedFPS = 60.0f;
+    constexpr static float MinFPS = 3.0f;
+
+    inline static Clock::time_point _start = Clock::now();
+    inline static Clock::time_point _unscaledFrameStart = _start;
+    inline static Clock::time_point _fpsStart = _start;
+
+    inline static uint64 _totalFrameCount = 0;
+    inline static uint _frameCount = 0;
+    inline static uint _fps = 0u;
+
+    inline static float _timeScale = 1.0f;
+    inline static float _scaledTime = 0.0f;
+    inline static float _unscaledTime = 0.0f;
+    inline static float _maxDeltaTime = 1.0f / MinFPS;
+    inline static float _scaledDeltaTime = 0.0f;
+    inline static float _unscaledDeltaTime = 0.0f;
+    inline static float _scaledFixedTime = 0.0f;
+    inline static float _unscaledFixedDeltaTime = 1.0f / DefaultDesiredFixedFPS;
+};
+} // namespace pix::core

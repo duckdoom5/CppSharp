@@ -305,6 +305,14 @@ namespace CppSharp.AST
             return true;
         }
 
+        public virtual bool VisitDependentType(DependentType dependent, TypeQualifiers quals)
+        {
+            if (!VisitType(dependent, quals))
+                return false;
+
+            return true;
+        }
+
         public virtual bool VisitPackExpansionType(PackExpansionType packExpansionType, TypeQualifiers quals)
         {
             return true;
@@ -433,7 +441,7 @@ namespace CppSharp.AST
 
             if (VisitOptions.VisitFunctionReturnType)
             {
-                if(property.Type != null) // Auto types return null types currently
+                if (property.Type != null) // Auto types return null types currently
                     property.Type.Visit(this);
             }
 
@@ -483,7 +491,7 @@ namespace CppSharp.AST
             if (!VisitDeclaration(parameter))
                 return false;
 
-            return parameter.Type.Visit(this, parameter.QualifiedType.Qualifiers);
+            return parameter.Type?.Visit(this, parameter.QualifiedType.Qualifiers) ?? false;
         }
 
         public virtual bool VisitTypedefNameDecl(TypedefNameDecl typedef)

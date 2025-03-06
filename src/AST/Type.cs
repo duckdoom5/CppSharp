@@ -90,7 +90,7 @@ namespace CppSharp.AST
 
         public override bool Equals(object obj)
         {
-            if (obj is not QualifiedType type) 
+            if (obj is not QualifiedType type)
                 return false;
 
             return Type.Equals(type.Type) && Qualifiers.Equals(type.Qualifiers);
@@ -144,7 +144,7 @@ namespace CppSharp.AST
 
         public override bool Equals(object obj)
         {
-            if (obj is not TagType type) 
+            if (obj is not TagType type)
                 return false;
 
             return Declaration.Equals(type.Declaration);
@@ -210,7 +210,7 @@ namespace CppSharp.AST
 
         public override bool Equals(object obj)
         {
-            if (obj is not ArrayType type) 
+            if (obj is not ArrayType type)
                 return false;
 
             var equals = QualifiedType.Equals(type.QualifiedType) && SizeType.Equals(type.SizeType);
@@ -958,6 +958,37 @@ namespace CppSharp.AST
     }
 
     /// <summary>
+    /// Represents a dependant type
+    /// </summary>
+    public class DependentType : Type
+    {
+        public DependentType()
+        {
+        }
+
+        public DependentType(DependentType type)
+            : base(type)
+        {
+        }
+
+        public QualifiedType Qualifier { get; set; }
+
+
+        public override T Visit<T>(ITypeVisitor<T> visitor,
+                                   TypeQualifiers quals = new())
+        {
+            return visitor.VisitDependentType(this, quals);
+        }
+
+        public override object Clone()
+        {
+            return new DependentType(this);
+        }
+
+        public override int GetHashCode() => Qualifier.GetHashCode();
+    }
+
+    /// <summary>
     /// Represents a CIL type.
     /// </summary>
     public class CILType : Type
@@ -1268,8 +1299,8 @@ namespace CppSharp.AST
             TemplateParameterSubstitutionType param, TypeQualifiers quals);
         T VisitInjectedClassNameType(InjectedClassNameType injected,
             TypeQualifiers quals);
-        T VisitDependentNameType(DependentNameType dependent,
-            TypeQualifiers quals);
+        T VisitDependentNameType(DependentNameType dependent, TypeQualifiers quals);
+        T VisitDependentType(DependentType dependentType, TypeQualifiers quals);
         T VisitPackExpansionType(PackExpansionType packExpansionType, TypeQualifiers quals);
         T VisitUnaryTransformType(UnaryTransformType unaryTransformType, TypeQualifiers quals);
         T VisitUnresolvedUsingType(UnresolvedUsingType unresolvedUsingType, TypeQualifiers quals);

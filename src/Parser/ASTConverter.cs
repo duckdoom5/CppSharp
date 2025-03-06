@@ -27,6 +27,7 @@ namespace CppSharp
         public abstract TRet VisitTemplateParameterSubstitution(TemplateParameterSubstitutionType type);
         public abstract TRet VisitInjectedClassName(InjectedClassNameType type);
         public abstract TRet VisitDependentName(DependentNameType type);
+        public abstract TRet VisitDependentType(DependentType type);
         public abstract TRet VisitBuiltin(BuiltinType type);
         public abstract TRet VisitPackExpansion(PackExpansionType type);
         public abstract TRet VisitUnaryTransform(UnaryTransformType type);
@@ -109,6 +110,11 @@ namespace CppSharp
                 {
                     var _type = DependentNameType.__CreateInstance(type.__Instance);
                     return VisitDependentName(_type);
+                }
+                case TypeKind.Dependent:
+                {
+                    var _type = DependentType.__CreateInstance(type.__Instance);
+                    return VisitDependentType(_type);
                 }
                 case TypeKind.Builtin:
                 {
@@ -737,6 +743,14 @@ namespace CppSharp
             VisitType(type, _type);
             _type.Qualifier = VisitQualified(type.Qualifier);
             _type.Identifier = type.Identifier;
+            return _type;
+        }
+
+        public override AST.Type VisitDependentType(DependentType type)
+        {
+            var _type = new AST.DependentType();
+            VisitType(type, _type);
+            _type.Qualifier = VisitQualified(type.Qualifier);
             return _type;
         }
 

@@ -76,6 +76,8 @@ namespace CppSharp.Tests
         {
             driver.Options.MarshalCharAsManagedChar = true;
             driver.Options.GenerateDefaultValuesForArguments = true;
+            driver.Options.GenerateFunctionTemplates = true;
+            driver.Options.GenerateClassTemplates = true;
         }
 
         public override void Preprocess(Driver driver, ASTContext ctx)
